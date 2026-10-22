@@ -2235,9 +2235,9 @@ footer {
   .scroll-hero-panel { padding-inline: 24px; padding-bottom: 115px; }
   .scroll-hero-content h1 { width: clamp(240px, 78vw, 420px); }
   .scroll-hero-descriptor { max-width: 330px; }
-  .scroll-hero-slide.slide-1 img { object-position: 62% center; }
-  .scroll-hero-slide.slide-2 img { object-position: 64% center; }
-  .scroll-hero-slide.slide-3 img { object-position: 53% center; }
+  .scroll-hero-slide.slide-1 img,
+  .scroll-hero-slide.slide-2 img,
+  .scroll-hero-slide.slide-3 img { object-position: center; }
 }
 @media (max-width: 480px) {
   .scroll-hero-actions { flex-direction: column; max-width: 300px; margin-inline: auto; gap: 12px; }
@@ -2609,6 +2609,47 @@ footer {
 @media (max-width: 700px) {
   .branch-news { padding-block: 24px 40px; }
   .branch-news-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}
+
+/* Small entrances affect content only: section geometry, sticky panels and forms stay stable. */
+.reveal { min-width: 0; }
+@keyframes content-arrive {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes photo-settle {
+  from { transform: scale(1.035); }
+  to { transform: scale(1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reveal[data-reveal] {
+    transition: opacity 650ms cubic-bezier(.22, .68, .25, 1) var(--reveal-delay, 0s), transform 650ms cubic-bezier(.22, .68, .25, 1) var(--reveal-delay, 0s);
+  }
+  .reveal[data-reveal="waiting"] { opacity: 0; transform: translate3d(0, 18px, 0); }
+  .reveal:focus-within { opacity: 1; transform: none; transition: none; }
+  .scroll-hero-content > *, .scroll-hero-bottom,
+  .branch-overview h1, .branch-overview-grid > .branch-exterior,
+  .branch-info-heading, .branch-essentials dl > div,
+  .choose-branch .section-heading > *, .choose-branch .restaurant-card {
+    animation: content-arrive 700ms cubic-bezier(.22, .68, .25, 1) backwards;
+  }
+  .scroll-hero-content h1 { animation-delay: 80ms; }
+  .scroll-hero-locations { animation-delay: 180ms; }
+  .scroll-hero-descriptor { animation-delay: 260ms; }
+  .scroll-hero-actions { animation-delay: 340ms; }
+  .scroll-hero-bottom { animation-delay: 480ms; }
+  .scroll-hero-slide:first-child img { animation: photo-settle 1400ms cubic-bezier(.22, .68, .25, 1) backwards; }
+  .branch-overview-grid > .branch-exterior { animation-delay: 100ms; }
+  .branch-info-heading { animation-delay: 160ms; }
+  .branch-essentials dl > div:nth-child(1) { animation-delay: 220ms; }
+  .branch-essentials dl > div:nth-child(2) { animation-delay: 280ms; }
+  .branch-essentials dl > div:nth-child(3) { animation-delay: 340ms; }
+  .branch-essentials dl > div:nth-child(4) { animation-delay: 400ms; }
+  .choose-branch .section-heading > p { animation-delay: 100ms; }
+  .choose-branch .restaurant-card:nth-child(1) { animation-delay: 160ms; }
+  .choose-branch .restaurant-card:nth-child(2) { animation-delay: 260ms; }
+  .scroll-hero-actions:focus-within, .branch-info-heading:focus-within,
+  .branch-essentials dl > div:focus-within, .choose-branch .restaurant-card:focus-within { animation: none; }
 }
 @media (max-width: 900px) {
   .branch-essentials { padding-inline: 18px; }

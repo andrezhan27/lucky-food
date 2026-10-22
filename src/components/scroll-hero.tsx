@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import { useRef } from "react";
 import {
   motion,
@@ -31,12 +31,23 @@ export function ScrollHero({ locale }: { locale: Locale }) {
     <section ref={section} className="scroll-hero" aria-labelledby="hero-name" data-reduced-motion={reduce ? "true" : undefined}>
       <div className="scroll-hero-panel">
         <div className="scroll-hero-images" aria-hidden="true">
-          {[firstY, secondY, thirdY].map((y, index) => (
-            <motion.div key={index} className={`scroll-hero-slide slide-${index + 1}`} style={{ y: reduce ? 0 : y }}>
-              <Image src={`/images/hero${index ? `-${index + 1}` : ""}.webp`} alt="" fill sizes="100vw" priority={index === 0} loading={index === 0 ? undefined : "eager"} />
-              <div className="scroll-hero-shade" />
-            </motion.div>
-          ))}
+          {[firstY, secondY, thirdY].map((y, index) => {
+            const name = `hero${index ? `-${index + 1}` : ""}`;
+            const common = { alt: "", fill: true, sizes: "100vw" };
+            const { props: desktop } = getImageProps({ ...common, src: `/images/${name}.webp` });
+            const { props: mobile } = getImageProps({ ...common, src: `/images/${name}-mobile.webp` });
+
+            return (
+              <motion.div key={index} className={`scroll-hero-slide slide-${index + 1}`} style={{ y: reduce ? 0 : y }}>
+                <picture>
+                  <source media="(max-width: 700px)" srcSet={mobile.srcSet} sizes={mobile.sizes} />
+                  {/* getImageProps preserves Next.js image optimisation for art direction. */}
+                  <img {...desktop} alt="" loading="eager" fetchPriority={index === 0 ? "high" : "auto"} />
+                </picture>
+                <div className="scroll-hero-shade" />
+              </motion.div>
+            );
+          })}
         </div>
         <div className="scroll-hero-content">
           <h1 id="hero-name">

@@ -145,8 +145,9 @@ export function SpaceGallery({
   const t = getDictionary(locale);
   return (
     <div className="space-gallery">
-      {images.map((photo) => (
-        <figure className="space-item" key={photo.src}>
+      {images.map((photo, index) => (
+        <Reveal key={photo.src} delay={(index % 2) * 0.1}>
+        <figure className="space-item">
           <Photo
             src={photo.src}
             alt={`${t[photo.altKey]}${photo.city ? ` · ${photo.city}` : ""}`}
@@ -156,6 +157,7 @@ export function SpaceGallery({
             <figcaption className="space-caption">{photo.city}</figcaption>
           )}
         </figure>
+        </Reveal>
       ))}
     </div>
   );
@@ -254,12 +256,13 @@ export function Home({ locale }: { locale: Locale }) {
           </Reveal>
           <div className="restaurant-grid">
             {restaurants.map((r, i) => (
+              <Reveal key={r.id} delay={i * 0.1}>
               <RestaurantCard
-                key={r.id}
                 restaurant={r}
                 locale={locale}
                 index={i}
               />
+              </Reveal>
             ))}
           </div>
         </div>
@@ -269,13 +272,13 @@ export function Home({ locale }: { locale: Locale }) {
       <PricingOverview locale={locale} />
       <section className="section spaces-section" id="spaces">
         <div className="container">
-          <div className="section-heading">
+          <Reveal className="section-heading">
             <div>
               <p className="eyebrow">{t.spaceKicker}</p>
               <h2>{t.spaceTitle}</h2>
             </div>
             <p>{t.spaceIntro}</p>
-          </div>
+          </Reveal>
           <SpaceGallery locale={locale} />
           <p className="photo-caption">{t.brandPhoto}</p>
         </div>
@@ -290,21 +293,22 @@ export function PricingOverview({ locale }: { locale: Locale }) {
   return (
     <section className="section pricing-overview" id="pricing-overview">
       <div className="container">
-        <div className="section-heading">
+        <Reveal className="section-heading">
           <div>
             <p className="eyebrow">{t.prices}</p>
             <h2>{t.priceOverviewTitle}</h2>
           </div>
           <p>{t.priceOverviewIntro}</p>
-        </div>
+        </Reveal>
         <div className="price-overview-packages">
           {(["base", "plus"] as const).map((name) => (
             <p key={name}><strong>{t[name]}</strong><span>{t[name === "base" ? "baseInfo" : "plusInfo"]}</span></p>
           ))}
         </div>
         <div className="price-overview-grid">
-          {restaurants.map((r) => (
-            <article className="price-overview-location" key={r.id}>
+          {restaurants.map((r, index) => (
+            <Reveal key={r.id} delay={index * 0.1}>
+            <article className="price-overview-location">
               <h3>{r.city}</h3>
               <table className="price-overview-table">
                 <caption className="sr-only">{r.city} · {t.perPerson}</caption>
@@ -333,6 +337,7 @@ export function PricingOverview({ locale }: { locale: Locale }) {
                 {t.fullPrices}<ArrowUpRight size={17} />
               </Link>
             </article>
+            </Reveal>
           ))}
         </div>
         <p className="pricing-note">{t.priceOverviewNote}</p>
@@ -451,8 +456,11 @@ export function RestaurantDetail({
       </section>
       <section className="branch-experience section" id="prices">
         <div className="container branch-experience-grid">
+          <Reveal>
           <RestaurantPricing restaurant={r} locale={locale} />
-          <div className="branch-gallery" id="food">
+          </Reveal>
+          <Reveal className="branch-gallery" delay={0.1}>
+          <div id="food">
             <div className="branch-block-heading"><h2 id="space">{t.spaceBuffet}</h2></div>
             <FoodCarousel
               key={r.id}
@@ -463,11 +471,13 @@ export function RestaurantDetail({
               ]}
             />
           </div>
+          </Reveal>
         </div>
         <SectionSeparator />
       </section>
       <section className="branch-reservation-section section" id="reservation">
-        <div className="container branch-reservation-card">
+        <div className="container">
+        <Reveal className="branch-reservation-card">
           <div className="branch-reservation-heading">
             <div><h2>{t.reserve}</h2><p>{r.city}</p></div>
             <Link className="button" href={booking(r, locale)}>{t.reserve}</Link>
@@ -475,22 +485,25 @@ export function RestaurantDetail({
           <div className="branch-reservation-map">
             <iframe src={r.mapEmbedUrl} title={`${t.mapTitle} · ${r.city}`} width="600" height="450" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="strict-origin-when-cross-origin" />
           </div>
+        </Reveal>
         </div>
         <SectionSeparator />
       </section>
       {(r.id === "jemeppe" || r.news.length > 0) && (
         <section className="branch-news section" id="news" aria-labelledby="news-title">
           <div className="container">
-            <div className="branch-block-heading"><h2 id="news-title">{t.news}</h2></div>
+            <Reveal className="branch-block-heading"><h2 id="news-title">{t.news}</h2></Reveal>
             {r.id === "jemeppe" && (
               <div className="branch-news-grid">
                 {[
                   { src: "/images/JSSNoel2025.webp", alt: t.newsChristmasPoster },
                   { src: "/images/JSSnewyear2025.webp", alt: t.newsNewYearPoster },
-                ].map(poster => (
-                  <a className="branch-news-poster" key={poster.src} href={poster.src} target="_blank" rel="noreferrer">
+                ].map((poster, index) => (
+                  <Reveal key={poster.src} delay={index * 0.1}>
+                  <a className="branch-news-poster" href={poster.src} target="_blank" rel="noreferrer">
                     <Image src={poster.src} alt={poster.alt} width={1920} height={1353} sizes="(max-width: 700px) calc(100vw - 40px), (max-width: 1150px) calc((100vw - 96px) / 2), 648px" />
                   </a>
+                  </Reveal>
                 ))}
               </div>
             )}
@@ -531,13 +544,13 @@ export function ReviewsSection({
       aria-labelledby="reviews-title"
     >
       <div className="container">
-        <div className="section-heading">
+        <Reveal className="section-heading">
           <div>
             <p className="eyebrow">{t.reviews}</p>
             <h2 id="reviews-title">{t.reviewsTitle}</h2>
           </div>
           <p>{t.reviewsIntro}</p>
-        </div>
+        </Reveal>
         <ReviewCarousel
           key={restaurant?.id || "all-restaurants"}
           previousLabel={t.previousReview}

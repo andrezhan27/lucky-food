@@ -9,6 +9,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -22,7 +23,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import type { FoodPhoto } from "@/lib/data";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import {
   locales,
   restaurants,
@@ -345,21 +346,41 @@ export function Navbar() {
 export function Reveal({
   children,
   className = "",
+  delay = 0,
 }: {
   children: React.ReactNode;
   className?: string;
+  delay?: number;
 }) {
   const reduce = useReducedMotion();
+  const element = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = element.current;
+    if (!node || reduce || !("IntersectionObserver" in window)) return;
+    // Leave server-rendered content and the current reading position visible.
+    // Only prepare elements that are still below the viewport for a reveal.
+    if (node.getBoundingClientRect().top < window.innerHeight) return;
+    node.dataset.reveal = "waiting";
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      node.dataset.reveal = "visible";
+      observer.disconnect();
+    }, { rootMargin: "0px 0px -32px 0px" });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      delete node.dataset.reveal;
+    };
+  }, [reduce]);
   return (
-    <motion.div
-      className={className}
-      initial={{ y: reduce ? 0 : 12 }}
-      whileInView={{ y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: reduce ? 0 : 0.5 }}
+    <div
+      ref={element}
+      className={`reveal ${className}`}
+      style={{ "--reveal-delay": `${delay}s` } as CSSProperties}
+      onFocusCapture={event => { event.currentTarget.dataset.reveal = "visible"; }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 export function FoodCarousel({ photos, label }: { photos: GalleryPhoto[]; label?: string }) {

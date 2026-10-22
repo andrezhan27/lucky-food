@@ -128,6 +128,12 @@ Language changes use navigation with automatic scrolling disabled. `src/lib/loca
 
 Section lights use a 96px transparent band around the boundary, a narrow travelling streak and soft elliptical gradients for the glow. The hero clips its moving images separately so its separator glow can fade across the boundary. Reduced motion still disables the sweep.
 
+## Entrance animations
+
+The homepage logo, locations, descriptor and CTAs fade upward in a short sequence; the first hero photograph settles from a subtle 1.035 scale. Restaurant titles, exterior photos and information rows enter in sequence, and both branch choosers animate their headings and cards. Entrances last 700ms with delays under half a second. The navbar and reservation widgets remain immediately available.
+
+Lower headings, restaurant cards, price cards, gallery photos, reservation cards and news posters reveal once as they enter view, using opacity and an 18px transform over 650ms. `Reveal` only prepares content below the viewport after hydration; server-rendered content stays visible without JavaScript, and the current reading position is not hidden on language changes. Observer callbacks change a data attribute, with no per-frame React updates. Focus reveals a block immediately. All new motion is scoped to `prefers-reduced-motion: no-preference`. Section wrappers and the hero’s sticky stage are not transformed, keeping anchor positions and layout stable.
+
 ## Footer
 
 The footer places section links between the logo and the two restaurant contact columns on desktop, and stacks them responsively on mobile. It contains no language selector. The credit reads “© 2026 Lucky Food. Designed by Intelis, all rights reserved.” with Intelis linking to https://intelis.pt.
