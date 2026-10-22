@@ -30,10 +30,10 @@ Push this directory to a GitHub repository and import it into Vercel. Use the Ne
 - `src/lib/data.ts`: typed independent location records, exact prices, provisional hours, news, reservation settings, assets and unresolved questions.
 - `src/lib/translations.ts`: shared French, Dutch and English dictionaries.
 - `src/components/site.tsx`: server-rendered content and shared restaurant template.
-- `src/components/interactive.tsx`: language context, hash-preserving language switch, mobile menu, anchor navigation, restrained motion and stable-target magnetic CTA.
+- `src/components/interactive.tsx`: language context, reading-position-preserving language switch, mobile menu, anchor navigation and photo/review carousels.
 - `src/app/globals.css`: theme tokens, Tailwind integration, container queries, mobile layouts and reduced-motion rules.
 
-Routes: `/fr`, `/nl`, `/en`, and `/{locale}/restaurants/{sint-pieters-leeuw|jemeppe}`. Unknown locales and restaurants return 404. Essential content and anchor navigation work without JavaScript; the mobile menu and language position preservation need JavaScript.
+Routes: `/fr`, `/nl`, `/en`, `/{locale}/restaurants/choose-branch`, `/{locale}/restaurants/{sint-pieters-leeuw|jemeppe}`, `/{locale}/reservation`, and `/{locale}/reservation/{sint-pieters-leeuw|jemeppe}` (21 localised pages). `/reservation` and `/reservation/[branch]` redirect to their French versions. Unknown locales and restaurants return 404. Essential content and booking links work without JavaScript; the mobile menu and language position preservation need JavaScript.
 
 ## Asset replacement
 
@@ -41,11 +41,13 @@ The supplied logo and `hero.webp` are used for brand imagery. `space-1.webp`, `s
 
 The homepage buffet uses the supplied `spl-food-*` and `j-food-*` images in a slow, seamless moving strip. It pauses on hover or keyboard focus, has no pause button, and becomes a static horizontally scrollable strip with reduced motion. Image dimensions are recorded in `FoodPhoto` data, so portrait and landscape photos retain their native proportions without cropping or letterboxing. Duplicated loop images are hidden from assistive technology. Branch detail carousels advance every six seconds while visible, with keyboard navigation and native touch swiping. They pause during hover, focus, touch interaction or while the page is hidden, and remain manual for reduced motion. No stock food images are used. Each branch’s `foodPhotos` and `gallery` arrays live in `src/lib/data.ts`; descriptions and controls are translated in `translations.ts`. The `j-space-*` photographs are assigned to Jemeppe and included in the six-image homepage grid alongside the three original brand interiors. The original unprefixed interiors are not attributed to a branch. Sint-Pieters-Leeuw’s dedicated interior gallery remains a placeholder until its interior photographs are identified. All new branch food photos appear on that branch’s detail page.
 
-Remote placeholder food URLs have been removed. Images use next/image with explicit responsive containers and lazy loading below the hero. The provided 2025 Christmas/New Year posters remain unused, as no current event was confirmed.
+Remote placeholder food URLs have been removed. Images use next/image with explicit responsive containers and lazy loading below the hero. Jemeppe’s final News section, after the reservation card, displays the supplied `JSSNoel2025.webp` and `JSSnewyear2025.webp` posters. They retain their full proportions and rounded corners, appear side by side on desktop and stack on phones. Each opens the full poster for easier reading. Their original 2025 dates are unchanged.
 
 ## Reservations
 
-Each location has a separate `reservation` object. No booking URLs were supplied; every booking action opens that branch’s telephone number. Homepage reservation actions require an explicit location choice. Set `reservation.url` to a verified HTTPS booking destination to replace telephone booking. `iframe` is reserved in the data model for future integration; embedding is deliberately not implemented until an actual provider is supplied. No query parameter controls a booking destination and no fake reservation form is present.
+Each location has its owner-supplied `reservationWidgetUrl` in `src/lib/data.ts`: Jemeppe uses `https://reserve.intelis.pt/lucky-food-jss`; Sint-Pieters-Leeuw uses `https://reserve.intelis.pt/lucky-food-spl`. Booking CTAs open `/{locale}/reservation/[branch]`. Each page retains the shared navbar and uses an eager, titled iframe for the entire remaining dynamic viewport, without a footer, outer gutters or card framing. Generic booking CTAs open `/{locale}/reservation` to choose a branch; CTAs on a restaurant or booking page go directly to that branch. Telephone numbers remain contact links, separate from online booking.
+
+Both widget URLs return HTTP 200, allow embedding and now render live reservation forms after owner activation. The widget’s own language and styling are controlled in Intelis; both currently default to Portuguese, with EN/PT/Chinese choices independent of the website’s FR/NL/EN navigation. No reservation was submitted during verification.
 
 ## Owner confirmation required before launch
 
@@ -54,9 +56,9 @@ Each location has a separate `reservation` object. No booking URLs were supplied
 3. **Sint-Pieters-Leeuw phone:** display remains `02/2188.888` as supplied. The dial link removes punctuation only (`022188888`). Confirm the number before launch.
 4. **Children:** confirm which packages the Sint-Pieters-Leeuw under-11 half-price discount applies to. Confirm Jemeppe under-4 pricing and children’s Plus prices. No alcohol inclusion for children is stated.
 5. **Photography:** confirm the location of the original unprefixed interior photographs and supply Sint-Pieters-Leeuw interior photos.
-6. **Booking:** provide each branch’s booking URL and optional provider iframe URL, if online booking is wanted.
+6. **Booking:** confirm the widget’s language, country-code defaults and availability settings in Intelis, then verify a real booking flow before launch.
 7. **Legal:** provide approved privacy/legal text, business legal identity and final domain. No placeholder legal links or VAT numbers are shown.
-8. **News:** provide genuine, current, localised entries. Empty news sections and their navigation links stay hidden.
+8. **News:** provide new localised entries when available. Jemeppe shows the two owner-requested JSS posters; other empty news sections stay hidden.
 
 Provisional opening hours are intentionally omitted from Restaurant structured data. Holiday prices take precedence over ordinary weekday lunches. Friday and Saturday **dinner only** share Sunday/holiday pricing; daytime Saturday pricing remains independent. All service periods apply only on opening days.
 
@@ -68,13 +70,9 @@ Semantic headings and landmarks, skip link, visible focus, translated image desc
 
 The production dependency audit reports no vulnerabilities. At implementation time the full audit reports five high-severity findings in the development-only ESLint chain (`eslint-config-next` → `fast-glob` → `micromatch` → `braces`), with no compatible fix offered. Recheck upstream before launch; do not downgrade Next.js tooling across major versions via `npm audit fix --force`.
 
-## Completed validation
+## Validation
 
-- ESLint: passed without warnings; TypeScript: passed; production build: passed (all nine locale pages generated).
-- HTTP checks: nine pages returned 200; `/` redirected to `/fr`; invalid locale/restaurant returned 404; sitemap and robots returned 200.
-- Verified all seven adult pricing rows and all three children’s rows against the supplied brief, independent booking telephone numbers, empty-news hiding, metadata alternatives and omission of provisional structured-data hours.
-- Browser inspection: desktop homepage and comparison table, mobile gallery/contact/pricing, 768px tablet layout, and all nine pages at 360px without horizontal overflow or empty link targets.
-- Browser interactions: mobile menu initial focus, reverse Tab, Escape/focus restoration, language changes retaining restaurant and detail section. Reduced-motion CSS and pointer restrictions are implemented; a separate emulated reduced-motion browser session was not available in this test surface.
+`npm run check` runs ESLint, TypeScript and the production build. `npm run test:smoke` checks a running server: all 21 localised pages, reservation widget URLs/titles/loading mode and footer omission, redirects, missing routes, internal links and section targets, canonical/language metadata, sitemap, robots, response headers, source images and responsive image delivery. Use `SMOKE_BASE_URL` to target a local production server or Vercel preview, and optionally `SMOKE_SITE_ORIGIN` to assert the expected canonical domain. See [DEPLOYMENT.md](DEPLOYMENT.md) for the latest results and exact commands.
 
 ## Homepage pricing overview
 
@@ -108,7 +106,7 @@ The review slider keeps its section height stable using the tallest review at th
 
 ## Image optimisation and deployment readiness
 
-All 16 public images, including the logo and retained event posters, are now WebP. The source image payload fell from 48,078,924 bytes to 4,420,590 bytes (90.8% smaller). Full-resolution originals are preserved locally in `assets/originals/`, excluded by `.gitignore` and `.vercelignore`. Conversion is reproducible with `npm run images:optimize`. The logo uses lossless compression; photographs use quality 84 and a maximum 1920px edge without upscaling. Responsive `next/image` delivery still serves appropriate smaller sizes.
+All 18 public images, including the three hero photos, logo and retained event posters, use WebP (approximately 4.9 MiB in total). Full-resolution originals are preserved locally in `assets/originals/`, excluded by `.gitignore` and `.vercelignore`. Conversion is reproducible with `npm run images:optimize`. The logo uses lossless compression; photographs use quality 84 and a maximum 1920px edge without upscaling. Responsive `next/image` delivery serves appropriate smaller sizes.
 
 `npm run check` runs lint, TypeScript and the production build. Vercel configuration uses Node 22.x, the standard Next.js output, final-domain-aware canonical metadata, WebP image delivery and basic response headers. Mobile viewport metadata supports safe-area insets. See [DEPLOYMENT.md](DEPLOYMENT.md) for the deployment steps and the existing business-content confirmations before public launch.
 
@@ -136,7 +134,7 @@ The footer places section links between the logo and the two restaurant contact 
 
 ## Restaurant detail structure
 
-Restaurant pages have three main sections: the restaurant name above an exterior photo and a short address/hours/phone/email table; adult/children price tabs beside a combined space-and-buffet photo carousel; and a dark reservation card with the branch’s supplied Google Maps embed and booking CTA. The header booking link targets that restaurant’s reservation card. The previous sticky section navigation, separate space/buffet sections, repeated contact block and floating mobile booking bar have been removed.
+Restaurant pages have three main sections: the restaurant name above an exterior photo and a short address/hours/phone/email table; adult/children price tabs beside a combined space-and-buffet photo carousel; and a dark reservation card with the branch’s supplied Google Maps embed and booking CTA. Jemeppe adds its poster news section last. All booking links open the dedicated reservation page for the branch. The previous sticky section navigation, separate space/buffet sections, repeated contact block and floating mobile booking bar have been removed.
 
 Opening hours are summarised as every day (except Tuesday) with lunch/dinner times, plus a Tuesday/closed line within the same hours section. Pricing defaults to adults; Jemeppe has a separate keyboard-accessible children’s tab, while Sint-Pieters-Leeuw has no tab selector because it has no explicit children’s rate table. Conditions, package details and takeaway prices remain accessible in one expandable disclosure. All values remain sourced from the existing data and translations. Carousels use each branch’s confirmed photos, falling back to the exterior when interior photos are unavailable. Restaurant pages contain no dedicated reviews section. Maps retain lazy loading, translated titles, responsive dimensions and the supplied referrer policy.
 
@@ -147,3 +145,9 @@ The restaurant visit panel blends into the page background and stretches to matc
 The visit table uses clearer dividers between address, hours, phone and email. Tuesday closure sits within the hours group and the provisional-hours display note is removed. Visible “Price per person” labels are removed. Holiday copy is shortened to “Public-holiday rates may vary.” The package-ordering note appears only inside the takeaway card.
 
 Both restaurant overview sections use the shared surface background. The navbar logo returns to the current language’s homepage at scroll position zero, including when clicked again from a lower homepage section.
+
+## Mobile layout and Vercel build
+
+Restaurant overview and pricing/gallery columns stack at 900px so tablet content remains readable. Phones use larger supporting copy, 44px carousel and language controls, full-width booking buttons, and single-column footer contact details. The language selector matches the navbar booking button’s height. The fixed header and page gutters account for display safe areas; compact landscape screens use a shorter hero composition. The mobile menu closes and releases its scroll lock when resizing to desktop.
+
+`vercel.json` selects Next.js, installs the lockfile with `npm ci`, and runs `npm run check` before creating a deployment. Node 22.x is pinned in `package.json`. The default Next.js output preserves image optimisation and generated routes.

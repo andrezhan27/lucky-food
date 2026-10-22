@@ -26,6 +26,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   locales,
   restaurants,
+  bookingForPath,
   type Locale,
   type GalleryPhoto,
 } from "@/lib/data";
@@ -91,6 +92,15 @@ export function LanguageSwitcher() {
       ))}
     </div>
   );
+}
+export function BookingLink({ children, className }: { children: React.ReactNode; className?: string }) {
+  const locale = useContext(LanguageContext);
+  const pathname = usePathname();
+  return <Link className={className} href={bookingForPath(pathname, locale)}>{children}</Link>;
+}
+export function PageFooter({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  return /^\/(fr|nl|en)\/reservation\/[^/]+$/.test(pathname) ? null : children;
 }
 function RestaurantDropdown({ locale, onSelect }: {
   locale: Locale;
@@ -174,13 +184,17 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const t = getDictionary(locale);
-  const reservationHref = restaurants.some(r => pathname === `/${locale}/restaurants/${r.id}`)
-    ? `${pathname}#reservation`
-    : `/${locale}#reservation`;
+  const reservationHref = bookingForPath(pathname, locale);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 901px)");
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
   useEffect(() => {
     const scroll = () => setScrolled(window.scrollY > 30);
     scroll();
@@ -241,7 +255,7 @@ export function Navbar() {
   ));
   return (
     <header
-      className={`header ${scrolled || open || pathname.includes("/restaurants/") ? "solid" : ""}`}
+      className={`header ${scrolled || open || pathname.includes("/restaurants/") || pathname.includes("/reservation") ? "solid" : ""}`}
     >
       <div className="header-inner">
         <Link
@@ -438,7 +452,7 @@ export function FoodCarousel({ photos, label }: { photos: GalleryPhoto[]; label?
               src={photo.src}
               alt={`${t[photo.altKey]}${photo.city ? ` · ${photo.city}` : ""}`}
               fill
-              sizes="(max-width: 700px) calc(100vw - 40px), 55vw"
+              sizes="(max-width: 700px) calc(100vw - 40px), (max-width: 900px) calc(100vw - 72px), 50vw"
             />
           </figure>
         ))}

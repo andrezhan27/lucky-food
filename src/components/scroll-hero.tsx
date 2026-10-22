@@ -12,6 +12,7 @@ import { ArrowDown } from "lucide-react";
 import type { Locale } from "@/lib/data";
 import { getDictionary } from "@/lib/translations";
 import { SectionSeparator } from "./section-separator";
+import { BookingLink } from "./interactive";
 
 export function ScrollHero({ locale }: { locale: Locale }) {
   const t = getDictionary(locale);
@@ -44,7 +45,7 @@ export function ScrollHero({ locale }: { locale: Locale }) {
           <p className="scroll-hero-locations">Sint-Pieters-Leeuw <span aria-hidden="true">·</span> Jemeppe-sur-Sambre</p>
           <p className="scroll-hero-descriptor">{t.heroDescriptor}</p>
           <div className="scroll-hero-actions">
-            <a className="hero-cta hero-cta-primary" href="#reservation">{t.reserve}</a>
+            <BookingLink className="hero-cta hero-cta-primary">{t.reserve}</BookingLink>
             <a className="hero-cta hero-cta-secondary" href="#food">
               {t.discover}
             </a>

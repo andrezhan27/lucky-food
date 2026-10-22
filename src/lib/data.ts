@@ -50,7 +50,7 @@ export type Restaurant = {
     image?: string;
     url?: string;
   }[];
-  reservation: { url: string | null; iframe: string | null; telephone: string };
+  reservationWidgetUrl: string;
   pendingConfirmation: string[];
 };
 export const restaurants: Restaurant[] = [
@@ -99,7 +99,7 @@ export const restaurants: Restaurant[] = [
       },
     ],
     news: [],
-    reservation: { url: null, iframe: null, telephone: "022188888" },
+    reservationWidgetUrl: "https://reserve.intelis.pt/lucky-food-spl",
     prices: [
       { period: "weekLunch", base: 25, plus: 33 },
       { period: "satLunch", base: 27, plus: 35 },
@@ -115,7 +115,7 @@ export const restaurants: Restaurant[] = [
       "Verify supplied telephone formatting and number 02/2188.888.",
       "Confirm scope of under-11 half-price discount across packages.",
       "Identify branch-specific interior photographs for galleries.",
-      "Provide booking URLs and legal content.",
+      "Provide legal content.",
     ],
   },
   {
@@ -160,7 +160,7 @@ export const restaurants: Restaurant[] = [
       },
     ],
     news: [],
-    reservation: { url: null, iframe: null, telephone: "071776888" },
+    reservationWidgetUrl: "https://reserve.intelis.pt/lucky-food-jss",
     prices: [
       { period: "allLunch", base: 22, plus: 29, children: [11, 16] },
       { period: "weekDinner", base: 33, plus: 40, children: [16, 26] },
@@ -173,7 +173,7 @@ export const restaurants: Restaurant[] = [
     pendingConfirmation: [
       "Contact hours 12:00–14:00 and 18:00–22:00 conflict with pricing 12:00–15:00 and 18:00–23:00. Contact hours used provisionally.",
       "Confirm under-4 and children’s Plus prices.",
-      "Provide booking URLs and legal content.",
+      "Provide legal content.",
     ],
   },
 ];
@@ -201,8 +201,14 @@ export const origin = new URL(
     (deploymentHost ? `https://${deploymentHost}` : "http://localhost:3000"),
 ).origin;
 export const directions = (r: Restaurant) => r.mapsUrl;
-export const booking = (r: Restaurant) =>
-  r.reservation.url || `tel:${r.reservation.telephone}`;
+export const booking = (r: Restaurant, locale: Locale) =>
+  `/${locale}/reservation/${r.id}`;
+export function bookingForPath(pathname: string, locale: Locale) {
+  const restaurant = restaurants.find(r =>
+    pathname === `/${locale}/restaurants/${r.id}` || pathname === booking(r, locale),
+  );
+  return restaurant ? booking(restaurant, locale) : `/${locale}/reservation`;
+}
 export const money = (value: number, locale: Locale) =>
   new Intl.NumberFormat(`${locale}-BE`, {
     style: "currency",

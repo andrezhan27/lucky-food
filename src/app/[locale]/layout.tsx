@@ -4,7 +4,7 @@ import "../globals.css";
 import { notFound } from "next/navigation";
 import { isLocale, locales } from "@/lib/data";
 import { getDictionary } from "@/lib/translations";
-import { LanguageProvider, Navbar } from "@/components/interactive";
+import { LanguageProvider, Navbar, PageFooter } from "@/components/interactive";
 import { Footer } from "@/components/site";
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -29,7 +29,7 @@ export default async function LocaleLayout({
             </a>
             <Navbar />
             <main id="main">{children}</main>
-            <Footer locale={locale} />
+            <PageFooter><Footer locale={locale} /></PageFooter>
           </div>
         </LanguageProvider>
       </body>

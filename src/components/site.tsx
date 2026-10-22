@@ -29,6 +29,7 @@ import {
   ReviewCarousel,
   MovingFoodCarousel,
   Reveal,
+  BookingLink,
 } from "./interactive";
 export function Photo({
   src,
@@ -54,15 +55,17 @@ export function RestaurantCard({
   locale,
   index,
   pricing = false,
+  reserving = false,
 }: {
   restaurant: Restaurant;
   locale: Locale;
   index: number;
   pricing?: boolean;
+  reserving?: boolean;
 }) {
   const t = getDictionary(locale);
-  const href = `/${locale}/restaurants/${r.id}${pricing ? "#prices" : ""}`;
-  const action = pricing ? t.fullPrices : t.view;
+  const href = reserving ? booking(r, locale) : `/${locale}/restaurants/${r.id}${pricing ? "#prices" : ""}`;
+  const action = reserving ? t.reserve : pricing ? t.fullPrices : t.view;
   return (
     <article className="restaurant-card">
       <Link
@@ -121,10 +124,10 @@ export function FoodSection({ locale }: { locale: Locale }) {
             <span>Wok</span>
             <span>Teppanyaki</span>
           </div>
-          <a className="text-link" href="#reservation">
+          <BookingLink className="text-link">
             {t.reserve}
             <ArrowUpRight size={17} />
-          </a>
+          </BookingLink>
         </Reveal>
         <MovingFoodCarousel photos={homepageFoodPhotos} />
       </div>
@@ -169,20 +172,20 @@ export function ReservationCTA({ locale }: { locale: Locale }) {
         </div>
         <div className="reservation-options">
           {restaurants.map((r, i) => (
-            <a
+            <Link
               key={r.id}
-              href={booking(r)}
-              aria-label={`${t.phoneBooking} · ${r.city}`}
+              href={booking(r, locale)}
+              aria-label={`${t.reserve} · ${r.city}`}
             >
               <span className="reservation-number">0{i + 1}</span>
               <span>
                 <strong>{r.city}</strong>
                 <small>
-                  {r.reservation.url ? t.reserve : t.phoneBooking} · {r.phone}
+                  {t.onlineBooking}
                 </small>
               </span>
               <ArrowUpRight size={23} />
-            </a>
+            </Link>
           ))}
         </div>
       </div>
@@ -213,7 +216,7 @@ export function Footer({ locale }: { locale: Locale }) {
           <Link href={`/${locale}/restaurants/choose-branch`}>{t.prices}</Link>
           <Link href={`/${locale}#spaces`}>{t.spaces}</Link>
           <Link href={`/${locale}#reviews`}>{t.reviews}</Link>
-          <Link href={`/${locale}#reservation`}>{t.reserve}</Link>
+          <BookingLink>{t.reserve}</BookingLink>
         </nav>
         {restaurants.map((r) => (
           <div key={r.id} className="footer-location">
@@ -429,11 +432,11 @@ export function RestaurantDetail({
         <div className="container">
           <h1>{r.city}</h1>
           <div className="branch-overview-grid">
-            {r.image && <Photo src={r.image} alt={r.name} className="branch-exterior" priority sizes="(max-width: 700px) 100vw, 50vw" />}
+            {r.image && <Photo src={r.image} alt={r.name} className="branch-exterior" priority sizes="(max-width: 700px) calc(100vw - 40px), (max-width: 900px) calc(100vw - 72px), 50vw" />}
             <div className="branch-essentials">
               <div className="branch-info-heading">
                 <h2>{t.restaurantInfo}</h2>
-                <a className="button" href={booking(r)}>{t.reserve}</a>
+                <Link className="button" href={booking(r, locale)}>{t.reserve}</Link>
               </div>
               <dl>
                 <div><dt><span className="branch-info-icon"><MapPin size={17} aria-hidden="true" /></span>{t.addressLabel}</dt><dd><a href={directions(r)} target="_blank" rel="noreferrer">{r.address}<ArrowUpRight size={15} aria-hidden="true" /></a></dd></div>
@@ -463,30 +466,11 @@ export function RestaurantDetail({
         </div>
         <SectionSeparator />
       </section>
-      {r.news.length > 0 && (
-        <section className="section container" id="news">
-          <h2>{t.news}</h2>
-          {r.news.map((n) => (
-            <article key={n.title}>
-              <time dateTime={n.date}>
-                {new Intl.DateTimeFormat(`${locale}-BE`, {
-                  dateStyle: "long",
-                }).format(new Date(n.date))}
-              </time>
-              <h3>{n.title}</h3>
-              <p>{n.summary}</p>
-              {n.image && <Photo src={n.image} alt={n.title} />}
-              {n.url && <a href={n.url}>{t.readMore}</a>}
-            </article>
-          ))}
-          <SectionSeparator />
-        </section>
-      )}
       <section className="branch-reservation-section section" id="reservation">
         <div className="container branch-reservation-card">
           <div className="branch-reservation-heading">
             <div><h2>{t.reserve}</h2><p>{r.city}</p></div>
-            <a className="button" href={booking(r)}>{r.reservation.url ? t.reserve : t.phoneBooking}<Phone size={17} aria-hidden="true" /></a>
+            <Link className="button" href={booking(r, locale)}>{t.reserve}</Link>
           </div>
           <div className="branch-reservation-map">
             <iframe src={r.mapEmbedUrl} title={`${t.mapTitle} · ${r.city}`} width="600" height="450" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="strict-origin-when-cross-origin" />
@@ -494,6 +478,37 @@ export function RestaurantDetail({
         </div>
         <SectionSeparator />
       </section>
+      {(r.id === "jemeppe" || r.news.length > 0) && (
+        <section className="branch-news section" id="news" aria-labelledby="news-title">
+          <div className="container">
+            <div className="branch-block-heading"><h2 id="news-title">{t.news}</h2></div>
+            {r.id === "jemeppe" && (
+              <div className="branch-news-grid">
+                {[
+                  { src: "/images/JSSNoel2025.webp", alt: t.newsChristmasPoster },
+                  { src: "/images/JSSnewyear2025.webp", alt: t.newsNewYearPoster },
+                ].map(poster => (
+                  <a className="branch-news-poster" key={poster.src} href={poster.src} target="_blank" rel="noreferrer">
+                    <Image src={poster.src} alt={poster.alt} width={1920} height={1353} sizes="(max-width: 700px) calc(100vw - 40px), (max-width: 1150px) calc((100vw - 96px) / 2), 648px" />
+                  </a>
+                ))}
+              </div>
+            )}
+            {r.news.map((n) => (
+              <article key={n.title}>
+                <time dateTime={n.date}>
+                  {new Intl.DateTimeFormat(`${locale}-BE`, { dateStyle: "long" }).format(new Date(n.date))}
+                </time>
+                <h3>{n.title}</h3>
+                <p>{n.summary}</p>
+                {n.image && <Photo src={n.image} alt={n.title} />}
+                {n.url && <a href={n.url}>{t.readMore}</a>}
+              </article>
+            ))}
+          </div>
+          <SectionSeparator />
+        </section>
+      )}
     </>
   );
 }
