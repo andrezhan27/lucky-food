@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+.vercel/
+
+# Full-resolution local source images; deploy only optimised WebP assets.
+assets/originals/
