@@ -3,7 +3,7 @@
 The project is prepared for Vercel’s Next.js preset; it has not been published.
 
 1. Push the project files to a Git repository and import the repository in Vercel.
-2. `vercel.json` selects the **Next.js** preset, `npm ci` installation and `npm run check` build command. This runs lint, TypeScript and the production build. Node **22.x** is declared in `package.json`. Leave the output directory on its framework default.
+2. `vercel.json` selects the **Next.js** preset and runs `npm run check` to lint and build. Next.js checks TypeScript during the build. Leave the Install Command and Output Directory on their Vercel defaults so the lockfile and build cache can be reused. Node **22.x** is declared in `package.json`.
 3. Set `NEXT_PUBLIC_SITE_ORIGIN` to the final HTTPS custom domain, without a trailing slash, or leave it unset to use Vercel’s hostname. If omitted, the app uses `VERCEL_PROJECT_PRODUCTION_URL`, then `VERCEL_URL`. Enable Vercel system environment variables for this fallback. Local development defaults to `http://localhost:3000`; do not set a localhost value in Vercel.
 4. Deploy, then confirm `/` redirects to `/fr`, all three homepages and both restaurant pages open, and `/sitemap.xml` uses the final domain.
 5. Verify Jemeppe’s online booking form, the Sint-Pieters-Leeuw phone link and both Google Maps destinations on an actual phone. Jemeppe’s widget language, country code and availability are configured in Intelis.
@@ -26,7 +26,7 @@ npm run test:smoke
 
 To check a preview or a different local port, set `SMOKE_BASE_URL` to that server’s URL. Optionally set `SMOKE_SITE_ORIGIN` to the expected canonical origin. The smoke test checks 12 localised pages, Jemeppe’s reservation iframe, redirects, 404s, links, metadata, sitemap and robots, response headers, and WebP delivery for the desktop and portrait hero sources.
 
-The production command uses Next.js’s supported `next build --webpack` option. A clean Turbopack build could not open its internal PostCSS worker port in this restricted local environment; the explicit webpack command lets local verification and Vercel use the same build path. Development can still use Turbopack; `npm run dev -- --webpack` is available if local worker-port restrictions affect development too.
+The production command uses Next.js’s default Turbopack compiler and its build cache. If a local sandbox blocks Turbopack’s PostCSS worker port, `npm run build -- --webpack` is available for local verification.
 
 For new photography, keep the originals in `assets/originals/`, run `npm run images:optimize`, and use the generated `.webp` paths in `src/lib/data.ts`. The conversion tool uses a 1920px maximum edge, never enlarges photos, retains their aspect ratios and preserves logo transparency losslessly. If replacing a food photo, update its width and height metadata too.
 

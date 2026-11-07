@@ -156,4 +156,4 @@ Both restaurant overview sections use the shared surface background. The navbar 
 
 Restaurant overview and pricing/gallery columns stack at 900px so tablet content remains readable. Phones use larger supporting copy, 44px carousel and language controls, full-width booking buttons, and single-column footer contact details. The language selector matches the navbar booking button’s height. The fixed header and page gutters account for display safe areas; compact landscape screens use a shorter hero composition. The mobile menu closes and releases its scroll lock when resizing to desktop.
 
-`vercel.json` selects Next.js, installs the lockfile with `npm ci`, and runs `npm run check` before creating a deployment. Node 22.x is pinned in `package.json`. The default Next.js output preserves image optimisation and generated routes.
+`vercel.json` selects Next.js and runs `npm run check` before creating a deployment. Vercel uses its default lockfile-based install and reuses cached dependencies. The build uses Turbopack and checks TypeScript once. Node 22.x is pinned in `package.json`. The default Next.js output preserves image optimisation and generated routes.

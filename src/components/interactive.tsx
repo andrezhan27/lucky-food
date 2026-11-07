@@ -515,19 +515,33 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const duration = 140_000;
-    // Use one compositor animation for autoplay and seek it directly during drag.
+    const frictionTime = 170;
+    // Seek the compositor animation during manual input, then let it run on its own.
     const effect = new KeyframeEffect(track, [], { duration, iterations: Infinity });
     const animation = new Animation(effect, document.timeline);
     let groupWidth = 0;
     let visible = false;
-    let drag: { id: number; x: number; time: number } | undefined;
+    let momentumFrame = 0;
+    let drag: {
+      id: number;
+      startX: number;
+      startTime: number;
+      lastX: number;
+      lastAt: number;
+      velocity: number;
+    } | undefined;
 
+    const stopMomentum = () => {
+      cancelAnimationFrame(momentumFrame);
+      momentumFrame = 0;
+    };
     const updatePlayback = () => {
       if (!groupWidth) return;
-      if (visible && !drag && !element.matches(":focus-visible")) {
-        animation.play();
-      } else {
+      if (!visible || element.matches(":focus-visible")) {
+        stopMomentum();
         animation.pause();
+      } else if (!drag && !momentumFrame) {
+        animation.play();
       }
     };
     const currentTime = () => Number(animation.currentTime ?? 0) % duration;
@@ -535,11 +549,32 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
       const next = time + (pixels / groupWidth) * duration;
       animation.currentTime = ((next % duration) + duration) % duration;
     };
+    const coast = (velocity: number) => {
+      const start = performance.now();
+      const time = currentTime();
+      const autoplaySpeed = groupWidth / duration;
+      const extraSpeed = velocity - autoplaySpeed;
+
+      const step = (now: number) => {
+        const elapsed = Math.max(0, now - start);
+        const decay = Math.exp(-elapsed / frictionTime);
+        // Ease the release speed into the autoplay speed so the handoff stays continuous.
+        seek(time, autoplaySpeed * elapsed + extraSpeed * frictionTime * (1 - decay));
+        if (Math.abs(extraSpeed * decay) > 0.025) {
+          momentumFrame = requestAnimationFrame(step);
+        } else {
+          momentumFrame = 0;
+          updatePlayback();
+        }
+      };
+      momentumFrame = requestAnimationFrame(step);
+    };
     const resizeTrack = () => {
       const width = group.getBoundingClientRect().width;
       const nextWidth = !reducedMotion.matches && width > element.clientWidth ? width : 0;
       if (nextWidth === groupWidth) return;
 
+      stopMomentum();
       const progress = currentTime() / duration;
       if (nextWidth) {
         const position = groupWidth ? progress * nextWidth : element.scrollLeft;
@@ -558,15 +593,35 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
     const onPointerDown = (event: PointerEvent) => {
       if (!groupWidth || !event.isPrimary || event.button !== 0 || drag) return;
       element.setPointerCapture(event.pointerId);
+      stopMomentum();
       animation.pause();
-      drag = { id: event.pointerId, x: event.clientX, time: currentTime() };
+      drag = {
+        id: event.pointerId,
+        startX: event.clientX,
+        startTime: currentTime(),
+        lastX: event.clientX,
+        lastAt: event.timeStamp,
+        velocity: 0,
+      };
     };
     const onPointerMove = (event: PointerEvent) => {
-      if (drag?.id === event.pointerId) seek(drag.time, drag.x - event.clientX);
+      if (drag?.id !== event.pointerId) return;
+      const elapsed = event.timeStamp - drag.lastAt;
+      if (elapsed > 0) {
+        const speed = (drag.lastX - event.clientX) / elapsed;
+        const weight = 1 - Math.exp(-elapsed / 35);
+        drag.velocity += (speed - drag.velocity) * weight;
+        drag.lastX = event.clientX;
+        drag.lastAt = event.timeStamp;
+      }
+      seek(drag.startTime, drag.startX - event.clientX);
     };
     const onPointerEnd = (event: PointerEvent) => {
       if (drag?.id !== event.pointerId) return;
+      const idleTime = event.timeStamp - drag.lastAt;
+      const velocity = Math.max(-2.5, Math.min(2.5, drag.velocity)) * Math.max(0, 1 - idleTime / 100);
       drag = undefined;
+      if (event.type === "pointerup" && Math.abs(velocity) > 0.06) coast(velocity);
       updatePlayback();
     };
     const onWheel = (event: WheelEvent) => {
@@ -576,11 +631,14 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
       if (!shiftKey && Math.abs(deltaY) > Math.abs(horizontal)) return;
       event.preventDefault();
       const unit = deltaMode === 1 ? 16 : deltaMode === 2 ? element.clientWidth : 1;
+      stopMomentum();
       seek(currentTime(), horizontal * unit);
+      updatePlayback();
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (!groupWidth || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
       event.preventDefault();
+      stopMomentum();
       updatePlayback();
       seek(currentTime(), event.key === "ArrowLeft" ? -80 : 80);
     };
@@ -596,12 +654,15 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
     reducedMotion.addEventListener("change", resizeTrack);
     element.addEventListener("pointerdown", onPointerDown, { passive: true });
     element.addEventListener("pointermove", onPointerMove, { passive: true });
+    element.addEventListener("pointerup", onPointerEnd);
+    element.addEventListener("pointercancel", onPointerEnd);
     element.addEventListener("lostpointercapture", onPointerEnd);
     element.addEventListener("wheel", onWheel, { passive: false });
     element.addEventListener("keydown", onKeyDown);
     element.addEventListener("focus", updatePlayback);
     element.addEventListener("blur", updatePlayback);
     return () => {
+      stopMomentum();
       animation.cancel();
       delete element.dataset.moving;
       resize.disconnect();
@@ -609,6 +670,8 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
       reducedMotion.removeEventListener("change", resizeTrack);
       element.removeEventListener("pointerdown", onPointerDown);
       element.removeEventListener("pointermove", onPointerMove);
+      element.removeEventListener("pointerup", onPointerEnd);
+      element.removeEventListener("pointercancel", onPointerEnd);
       element.removeEventListener("lostpointercapture", onPointerEnd);
       element.removeEventListener("wheel", onWheel);
       element.removeEventListener("keydown", onKeyDown);
