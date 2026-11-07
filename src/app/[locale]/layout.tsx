@@ -1,4 +1,5 @@
 import type { Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { heading, body } from "@/lib/fonts";
 import "../globals.css";
 import { notFound } from "next/navigation";
@@ -32,6 +33,7 @@ export default async function LocaleLayout({
             <PageFooter><Footer locale={locale} /></PageFooter>
           </div>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );

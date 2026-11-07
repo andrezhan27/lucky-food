@@ -23,7 +23,7 @@ npm start
 
 ## Deploy to Vercel
 
-Push this directory to a GitHub repository and import it into Vercel. Use the Next.js preset with the default build/output settings. Set `NEXT_PUBLIC_SITE_ORIGIN` to the final HTTPS domain before building; this controls canonical links, alternate languages, sitemap and structured data. If not set, Vercel’s production/deployment hostname is used; localhost is the development-only fallback. See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete deployment steps. No backend, secrets, analytics or database are required. Publishing and GitHub repository creation have not been performed.
+Push this directory to a GitHub repository and import it into Vercel. Use the Next.js preset with the default build/output settings. Set `NEXT_PUBLIC_SITE_ORIGIN` to the final HTTPS domain before building; this controls canonical links, alternate languages, sitemap and structured data. If not set, Vercel’s production/deployment hostname is used; localhost is the development-only fallback. Enable Web Analytics in the Vercel project before deploying. See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete deployment steps.
 
 ## Content and architecture
 
@@ -64,7 +64,7 @@ Provisional opening hours are intentionally omitted from Restaurant structured d
 
 ## Accessibility and mobile
 
-Semantic headings and landmarks, skip link, visible focus, translated image descriptions and controls, keyboard-trapped mobile navigation with Escape/focus restoration, and fixed-width FR/NL/EN controls. Restaurant prices use keyboard-accessible Adults/Children tabs with responsive tables. Essential contact details are summarised at the top, and booking with the map is at the bottom. Motion respects reduced-motion and pointer type. No separate analytics or tracking scripts are installed. Restaurant pages load the supplied Google Maps embeds.
+Semantic headings and landmarks, skip link, visible focus, translated image descriptions and controls, keyboard-trapped mobile navigation with Escape/focus restoration, and fixed-width FR/NL/EN controls. Restaurant prices use keyboard-accessible Adults/Children tabs with responsive tables. Essential contact details are summarised at the top, and booking with the map is at the bottom. Motion respects reduced-motion and pointer type. Vercel Web Analytics tracks page views. Restaurant pages load the supplied Google Maps embeds.
 
 ## Dependency audit
 
