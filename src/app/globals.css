@@ -293,132 +293,97 @@ svg {
   line-height: 1.9;
   padding-bottom: 6px;
 }
-.restaurant-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-}
 .restaurant-card {
-  container-type: inline-size;
   background: #fff;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
-.restaurant-image {
-  display: block;
-  height: 240px;
-  position: relative;
-  overflow: hidden;
+.visit-section {
+  margin-top: clamp(40px, 5vw, 64px);
 }
-.restaurant-image .photo {
-  height: 100%;
+.visit-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
 }
-.branch-sint-pieters-leeuw {
-  background: #ede7db;
+.visit-photo {
+  min-height: 320px;
 }
-.branch-jemeppe {
-  background: #e9dfce;
+.visit-copy {
+  align-self: center;
+  padding: clamp(24px, 4vw, 56px);
 }
-.branch-art {
-  height: 100%;
-  padding: 26px 34px;
+.visit-copy .eyebrow {
+  margin-bottom: 10px;
+}
+.visit-copy h2 {
+  margin-bottom: 24px;
+  font-size: clamp(28px, 3vw, 44px);
+}
+.visit-details {
+  display: grid;
+  gap: 24px;
+  margin: 0;
+  font-size: 15px;
+}
+.visit-details dt {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  background: linear-gradient(145deg, #ffffff45, transparent);
+  gap: 10px;
+  color: var(--accent-dark);
+  font-weight: 700;
 }
-.branch-art:before,
-.branch-art:after {
-  content: "";
-  position: absolute;
-  width: 65%;
-  height: 170%;
-  border: 1px solid #5c482620;
-  border-radius: 50%;
-  transform: rotate(30deg);
-  pointer-events: none;
-}
-.branch-art:after {
-  width: 58%;
-  height: 155%;
-}
-.branch-art > span {
-  font-size: 9px;
-  letter-spacing: 0.3em;
-  margin-bottom: 18px;
-}
-.branch-art svg {
-  margin-bottom: 8px;
-}
-.branch-art strong {
-  font-family: var(--font-heading);
-  font-size: 30px;
-  font-weight: 500;
-  z-index: 1;
-}
-.branch-art small {
-  font-size: 9px;
-  color: #665c4b;
-  margin-top: 9px;
-  z-index: 1;
-}
-.card-number {
-  position: absolute;
-  top: 18px;
-  left: 22px;
-  font-size: 10px;
-  letter-spacing: 0.15em;
-}
-.restaurant-copy {
-  padding: 28px 32px 0;
-}
-.restaurant-copy .eyebrow {
-  font-size: 8px;
-  margin-bottom: 6px;
-}
-.restaurant-copy h3 {
-  font-family: var(--font-heading);
-  font-size: 28px;
-  letter-spacing: -0.02em;
-  font-weight: 500;
-}
-.address {
+.visit-details dd {
+  margin: 4px 0 0 28px;
   color: var(--muted);
-  font-size: 12px;
-  margin-top: 9px;
-  min-height: 25px;
 }
-.phone-link {
-  display: inline-flex;
+.visit-details dd span {
+  display: block;
+}
+.visit-actions,
+.other-location-links {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  min-height: 40px;
+  gap: 4px 22px;
 }
-.restaurant-link {
+.visit-actions {
+  margin-top: 28px;
+}
+.visit-actions .button,
+.visit-actions .text-link {
+  font-size: 14px;
+}
+.other-location {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin-top: 24px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 18px;
-  font-size: 12px;
-  font-weight: 600;
-  padding-block: 20px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: right;
 }
-.restaurant-link span {
-  width: 33px;
-  height: 33px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  transition: background var(--motion);
+.other-location-links {
+  justify-content: flex-end;
 }
-.restaurant-link:hover span {
-  background: var(--accent);
+.other-location-links .text-link {
+  gap: 8px;
+  color: var(--ink);
+}
+.other-location-links .text-link:hover {
+  color: var(--accent-dark);
+}
+@media (max-width: 700px) {
+  .visit-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .visit-photo {
+    aspect-ratio: 3 / 2;
+    min-height: 0;
+  }
 }
 .food-section {
   background: var(--surface);
@@ -490,64 +455,6 @@ svg {
 }
 .space-photo-2 img {
   object-position: center 55%;
-}
-.reservation {
-  background: var(--dark);
-  color: white;
-  position: relative;
-  overflow: hidden;
-}
-.reservation .eyebrow {
-  color: var(--accent);
-}
-.reservation-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 100px;
-  align-items: center;
-}
-.reservation h2 {
-  font-size: clamp(38px, 4.6vw, 62px);
-}
-.reservation p:not(.eyebrow) {
-  max-width: 350px;
-  color: #ccc4b6;
-  font-size: 13px;
-  margin-top: 25px;
-}
-.reservation-options a {
-  padding: 28px 0;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  border-bottom: 1px solid #ffffff26;
-}
-.reservation-options a:first-child {
-  border-top: 1px solid #ffffff26;
-}
-.reservation-number {
-  color: #cfb98e;
-  font-size: 10px;
-}
-.reservation-options strong {
-  display: block;
-  font-size: 22px;
-  font-family: var(--font-heading);
-  font-weight: 500;
-}
-.reservation-options small {
-  color: #ccc4b6;
-  font-size: 10px;
-  display: block;
-  margin-top: 6px;
-}
-.reservation-options svg {
-  margin-left: auto;
-  color: var(--accent);
-  transition: transform var(--motion);
-}
-.reservation-options a:hover svg {
-  transform: translate(3px, -3px);
 }
 footer {
   background: #1b1b18;
@@ -776,6 +683,7 @@ footer {
 .pricing-table td:last-child {
   background: var(--surface);
 }
+.pricing-note a { text-decoration: underline; text-underline-offset: 3px; }
 .pricing-note {
   font-size: 11px;
   color: var(--muted);
@@ -929,17 +837,6 @@ footer {
 .mobile-booking {
   display: none;
 }
-@container (max-width: 460px) {
-  .restaurant-copy {
-    padding: 22px 23px 0;
-  }
-  .restaurant-copy h3 {
-    font-size: 29px;
-  }
-  .address {
-    min-height: 42px;
-  }
-}
 @media (max-width: 1150px) {
   :root { --page-gutter: 36px; }
   .header-inner {
@@ -967,9 +864,6 @@ footer {
   }
   .food-photos {
     height: 440px;
-  }
-  .reservation-grid {
-    gap: 50px;
   }
   .contact-grid {
     gap: 50px;
@@ -1103,19 +997,6 @@ footer {
   h2 {
     font-size: 44px;
   }
-  .restaurant-grid {
-    grid-template-columns: 1fr;
-    gap: 25px;
-  }
-  .restaurant-image {
-    height: 220px;
-  }
-  .restaurant-copy h3 {
-    font-size: 32px;
-  }
-  .address {
-    min-height: 0;
-  }
   .food-grid {
     grid-template-columns: 1fr;
     gap: 35px;
@@ -1150,26 +1031,6 @@ footer {
   }
   .space-photo-1 {
     grid-row: auto;
-  }
-  .reservation-grid {
-    grid-template-columns: 1fr;
-    gap: 35px;
-  }
-  .reservation h2 {
-    font-size: 58px;
-  }
-  .reservation p:not(.eyebrow) {
-    margin-top: 20px;
-  }
-  .reservation-options a {
-    padding: 23px 0;
-    gap: 20px;
-  }
-  .reservation-options strong {
-    font-size: 24px;
-  }
-  .reservation-options small {
-    font-size: 10px;
   }
   .footer-top {
     gap: 32px 25px;
@@ -1395,12 +1256,6 @@ footer {
   }
 }
 @media (max-width: 380px) {
-  .branch-art strong {
-    font-size: 27px;
-  }
-  .reservation-options strong {
-    font-size: 22px;
-  }
   .detail-hero h1 {
     font-size: 46px;
   }
@@ -1421,19 +1276,11 @@ footer {
   .photo:hover img {
     transform: none;
   }
-  .reservation-options a:hover svg {
-    transform: none;
-  }
 }
 
 /* Compact homepage price overview; full service comparisons stay on detail pages. */
 .pricing-overview {
   border-bottom: 1px solid var(--line);
-}
-.price-overview-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
 }
 .price-overview-location {
   padding-top: 25px;
@@ -1445,16 +1292,7 @@ footer {
   font-size: 26px;
   letter-spacing: -0.02em;
 }
-@media (max-width: 900px) {
-  .price-overview-grid {
-    gap: 28px;
-  }
-}
 @media (max-width: 700px) {
-  .price-overview-grid {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
   .price-overview-location h3 {
     font-size: 30px;
   }
@@ -1531,8 +1369,6 @@ footer {
     "lnum" 1,
     "tnum" 1;
 }
-.reservation-options strong,
-.restaurant-copy h3,
 .price-overview-location h3 {
   line-height: 1.25;
 }
@@ -1551,18 +1387,11 @@ footer {
   .contact-grid h2 {
     font-size: 36px;
   }
-  .reservation h2 {
-    font-size: 40px;
-  }
   .detail-hero h1 {
     font-size: 38px;
   }
-  .restaurant-copy h3,
   .price-overview-location h3 {
     font-size: 25px;
-  }
-  .reservation-options strong {
-    font-size: 22px;
   }
   .package-intros h3 {
     font-size: 24px;
@@ -1679,32 +1508,21 @@ footer {
   margin-top: 24px;
 }
 
-/* Consistent 3:2 image tiles; six homepage images form two columns by three rows. */
+/* Branch headings separate the space galleries. */
 .space-gallery {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: none;
   grid-auto-rows: auto;
 }
+.space-location + .space-location { margin-top: clamp(32px, 5vw, 64px); }
+.space-location h3 { margin-bottom: 18px; font-size: clamp(20px, 2.5vw, 32px); }
+.space-gallery-compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .space-item {
   aspect-ratio: 3 / 2;
   position: relative;
   margin: 0;
   min-width: 0;
   overflow: hidden;
-}
-.space-item .photo {
-  height: 100%;
-}
-.space-caption {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  max-width: calc(100% - 32px);
-  padding: 7px 12px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 10px;
-  border-radius: var(--radius);
 }
 @media (max-width: 900px) {
   .detail-food-grid {
@@ -1722,10 +1540,7 @@ footer {
     grid-template-rows: none;
     grid-auto-rows: auto;
   }
-  .space-caption {
-    bottom: 12px;
-    left: 12px;
-  }
+  .space-gallery-compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .food-carousel-controls {
     gap: 10px;
   }
@@ -1771,7 +1586,8 @@ footer {
   min-width: 0;
 }
 .moving-food-viewport {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
   overscroll-behavior-x: contain;
   border-radius: var(--radius);
@@ -1779,8 +1595,6 @@ footer {
 .moving-food-track {
   display: flex;
   width: max-content;
-  animation: food-strip-drift 140s linear infinite;
-  will-change: transform;
 }
 .moving-food-group {
   display: flex;
@@ -1800,11 +1614,6 @@ footer {
   object-fit: contain;
   border-radius: var(--radius);
 }
-.moving-food-card figcaption {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 10px;
-}
 .moving-food-controls {
   display: flex;
   align-items: center;
@@ -1814,14 +1623,6 @@ footer {
   margin-top: 16px;
   font-size: 11px;
   color: var(--muted);
-}
-@keyframes food-strip-drift {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
 }
 @media (max-width: 900px) {
   .moving-food-layout .food-copy {
@@ -1845,14 +1646,6 @@ footer {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .moving-food-viewport {
-    overflow-x: auto;
-  }
-  .moving-food-track {
-    animation: none;
-    transform: none;
-    will-change: auto;
-  }
   .moving-food-group[aria-hidden="true"] {
     display: none;
   }
@@ -2122,6 +1915,7 @@ footer {
   display: grid;
   place-items: center;
   padding: calc(var(--header-height) + 32px) 24px 100px;
+  padding-inline: max(24px, env(safe-area-inset-left, 0px)) max(24px, env(safe-area-inset-right, 0px));
 }
 .scroll-hero-images,
 .scroll-hero-slide,
@@ -2230,11 +2024,15 @@ footer {
   letter-spacing: 0.12em;
 }
 .scroll-hero-bottom a { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; }
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .scroll-hero { height: 220svh; }
-  .scroll-hero-panel { padding-inline: 24px; padding-bottom: 115px; }
+}
+@media (max-width: 900px) and (orientation: portrait) {
+  .scroll-hero-panel { padding-bottom: 115px; }
   .scroll-hero-content h1 { width: clamp(240px, 78vw, 420px); }
   .scroll-hero-descriptor { max-width: 330px; }
+  .scroll-hero-locations,
+  .scroll-hero-descriptor { white-space: normal; }
   .scroll-hero-slide.slide-1 img,
   .scroll-hero-slide.slide-2 img,
   .scroll-hero-slide.slide-3 img { object-position: center; }
@@ -2306,7 +2104,6 @@ footer {
 .restaurant-card,
 .price-overview-location,
 .review-card,
-.reservation-card,
 .package-intros > div,
 .children-prices,
 .takeaway-pricing,
@@ -2336,11 +2133,10 @@ footer {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
 }
 .price-overview-packages strong { color: var(--ink); }
-.price-overview-grid { gap: 24px; align-items: start; }
 .price-overview-location {
   padding: clamp(20px, 2.5vw, 32px);
   background: var(--paper);
@@ -2358,7 +2154,7 @@ footer {
   border-collapse: collapse;
   table-layout: fixed;
   margin-top: 20px;
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.6;
 }
 .price-overview-table th,
@@ -2368,33 +2164,16 @@ footer {
   vertical-align: top;
 }
 .price-overview-table th:first-child { width: 58%; text-align: left; padding-right: 14px; }
-.price-overview-table thead th { font-size: 11px; font-weight: 700; }
+.price-overview-table thead th { font-size: 14px; font-weight: 700; }
 .price-overview-table th:not(:first-child),
 .price-overview-table td { text-align: right; }
 .price-overview-table tbody th { white-space: pre-line; font-weight: 400; }
 .price-overview-table td { white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
-.price-overview-location > .text-link { margin-top: 18px; }
+.price-overview-location > .text-link { margin-top: 18px; font-size: 14px; }
+.pricing-overview .pricing-note { font-size: 13px; }
 
-/* Booking is a contained card within the review section, sharing its outer gutters. */
-.reservation-card {
-  margin-top: clamp(40px, 5vw, 64px);
-  padding: clamp(24px, 4vw, 52px);
-  scroll-margin-top: calc(var(--header-height) + 24px);
-}
-.reservation-card .reservation-grid { gap: clamp(32px, 5vw, 64px); }
-.reservation-card h2 { font-size: clamp(30px, 3.4vw, 46px); }
-.reservation-card p:not(.eyebrow) { margin-top: 18px; }
-.reservation-card .reservation-options a { gap: 16px; padding-block: 22px; }
-.reservation-card .reservation-options strong { font-size: clamp(19px, 2vw, 24px); }
-
-/* The photo strip pauses while hovered or keyboard-focused without an extra control. */
-.moving-food-viewport:hover .moving-food-track,
-.moving-food-viewport:focus-within .moving-food-track { animation-play-state: paused; }
 @media (max-width: 700px) {
-  .price-overview-grid { grid-template-columns: 1fr; }
   .price-overview-packages { flex-direction: column; gap: 8px; }
-  .reservation-card .reservation-grid { grid-template-columns: 1fr; }
-  .reservation-card .reservation-options a { gap: 12px; }
 }
 
 
@@ -2518,6 +2297,7 @@ footer {
   border-radius: var(--card-radius);
 }
 .branch-essentials dl { margin: 0; }
+.branch-website { align-self: flex-start; margin-top: 12px; }
 .branch-essentials dl > div {
   display: grid;
   grid-template-columns: 145px minmax(0, 1fr);
@@ -2765,8 +2545,8 @@ footer {
   .button, .hero-cta, .text-link { font-size: 14px; }
   .mobile-menu nav > a, .mobile-menu .restaurant-dropdown-trigger { font-size: clamp(24px, 5vw, 32px); padding-block: 16px; }
   .section-heading > p, .food-copy .body-copy { font-size: 15px; }
-  .price-overview-table, .branch-price-table { font-size: 13px; }
-  .price-overview-table thead th { font-size: 12px; }
+  .branch-price-table { font-size: 13px; }
+  .price-overview-table { font-size: 14px; }
   .footer-sections a { display: flex; align-items: center; min-height: 44px; font-size: 14px; }
   .review-card { padding-inline: 16px; }
   .review-source a { width: 44px; }

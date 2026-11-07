@@ -9,11 +9,8 @@ const expectedOrigin = process.env.SMOKE_SITE_ORIGIN
 const locales = ["fr", "nl", "en"];
 const paths = locales.flatMap(locale => [
   `/${locale}`,
-  `/${locale}/restaurants/choose-branch`,
   `/${locale}/restaurants/sint-pieters-leeuw`,
   `/${locale}/restaurants/jemeppe`,
-  `/${locale}/reservation`,
-  `/${locale}/reservation/sint-pieters-leeuw`,
   `/${locale}/reservation/jemeppe`,
 ]);
 const pages = new Map();
@@ -45,15 +42,72 @@ for (const path of paths) {
     assert.ok(html.includes(`hrefLang="${locale}"`), `${path}: ${locale} alternate`);
   }
   assert.ok(!/href="(?:#|)"/.test(html), `${path}: no empty links`);
-  const branch = path.match(/\/reservation\/(jemeppe|sint-pieters-leeuw)$/)?.[1];
-  if (branch) {
-    const widget = branch === "jemeppe" ? "lucky-food-jss" : "lucky-food-spl";
-    const name = branch === "jemeppe" ? "Lucky Food Jemeppe" : "Lucky Food Sint-Pieters-Leeuw";
-    assert.match(html, new RegExp(`<iframe[^>]+src="https://reserve\\.intelis\\.pt/${widget}"[^>]+title="${name}"`), path);
+  if (path.endsWith("/reservation/jemeppe")) {
+    assert.match(html, /<iframe[^>]+src="https:\/\/reserve\.intelis\.pt\/lucky-food-jss"[^>]+title="Lucky Food Jemeppe"/, path);
     assert.match(html, /<iframe[^>]+loading="eager"/, path);
     assert.ok(!html.includes("<footer"), `${path}: no footer below the full-screen form`);
   }
-  assert.ok(!/href="tel:[^"]*"[^>]*>\s*(?:Book by phone|Réserver par téléphone|Telefonisch reserveren)/.test(html), `${path}: no telephone booking CTA`);
+  assert.ok(!html.includes("lucky-food-spl"), `${path}: no SPL booking widget`);
+}
+
+const splPhone = "tel:+3222188888";
+const splWebsite = "https://www.buffetluckyfood.be/bxl-accueil.html";
+const heroImages = [1, 2, 3].flatMap(number => [
+  `hero-${number}.webp`,
+  `hero-${number}-mobile.webp`,
+]);
+for (const locale of locales) {
+  const home = pages.get(`/${locale}`);
+  const hero = home.match(/<div class="scroll-hero-images".*?<div class="scroll-hero-content"/s)[0];
+  const slides = [...hero.matchAll(/<img[^>]+src="[^"]*(hero-[1-3]\.webp)/g)].map(match => match[1]);
+  assert.deepEqual(slides, ["hero-1.webp", "hero-2.webp", "hero-3.webp"], `${locale}: hero order`);
+  const portraitSlides = [...hero.matchAll(/<source media="\(max-width: 900px\) and \(orientation: portrait\)"[^>]*srcSet="[^"]*(hero-[1-3]-mobile\.webp)/g)].map(match => match[1]);
+  assert.deepEqual(portraitSlides, ["hero-1-mobile.webp", "hero-2-mobile.webp", "hero-3-mobile.webp"], `${locale}: portrait hero sources`);
+  assert.equal((hero.match(/<img[^>]+loading="eager"/g) || []).length, 1, `${locale}: only the opening hero loads eagerly`);
+  for (const name of heroImages) assert.ok(hero.includes(name), `${locale}: ${name}`);
+
+  const food = home.slice(home.indexOf('id="food"'), home.indexOf('id="pricing-overview"'));
+  for (let number = 1; number <= 7; number++) assert.ok(food.includes(`j-food-${number}.webp`));
+  assert.ok(!food.includes("spl-food-"));
+  assert.ok(!food.includes("<figcaption"), `${locale}: no repeated food photo captions`);
+
+  const spaces = home.slice(home.indexOf('id="spaces"'), home.indexOf('id="reviews"'));
+  const [jemeppeGallery, splGallery] = spaces.split('aria-labelledby="spaces-sint-pieters-leeuw"');
+  for (let number = 1; number <= 6; number++) assert.ok(jemeppeGallery.includes(`j-space-${number}.webp`));
+  for (let number = 1; number <= 3; number++) assert.ok(splGallery.includes(`spl-space-${number}.webp`));
+  assert.ok(splGallery.includes("spl-exterior.webp") && !splGallery.includes("hero-2.webp"));
+  assert.ok(!jemeppeGallery.includes("spl-space-") && !splGallery.includes("j-space-"));
+
+  const reviewsStart = home.indexOf('id="reviews"');
+  const visitStart = home.indexOf('id="restaurants"');
+  const reviews = home.slice(reviewsStart, visitStart);
+  assert.ok(reviews.includes("Jemeppe-sur-Sambre") && !reviews.includes("Sint-Pieters-Leeuw"));
+  const pricingStart = home.indexOf('id="pricing-overview"');
+  const spacesStart = home.indexOf('id="spaces"');
+  assert.ok(pricingStart >= 0 && pricingStart < spacesStart && spacesStart < reviewsStart && reviewsStart < visitStart);
+  const prices = home.slice(pricingStart, spacesStart);
+  assert.equal((prices.match(/<table\b/g) || []).length, 1);
+  assert.ok(prices.includes("Jemeppe-sur-Sambre") && prices.includes(splWebsite));
+
+  const spl = pages.get(`/${locale}/restaurants/sint-pieters-leeuw`);
+  assert.ok(spl.includes(splWebsite) && !spl.includes("branch-price-table"));
+  const jemeppeBooking = `href="/${locale}/reservation/jemeppe"`;
+  const splBooking = `href="${splPhone}"`;
+  const visit = home.match(/<section[^>]+id="restaurants".*?<\/section>/s)[0];
+  assert.ok(visit.includes('id="reservation"') && visit.includes("visit-card"));
+  assert.ok(visit.includes("jemeppe-hero.webp") && !visit.includes("spl-exterior.webp"));
+  assert.ok(visit.includes(jemeppeBooking) && visit.includes("https://maps.app.goo.gl/V1b1UBnrVTtK64qE7"));
+  assert.ok(visit.includes(splBooking) && visit.includes(splWebsite));
+  assert.ok(food.includes(jemeppeBooking));
+  for (const html of [home, spl]) {
+    assert.ok(html.match(/<header\b.*?<\/header>/s)[0].includes(jemeppeBooking));
+    assert.ok(html.match(/<footer\b.*?<\/footer>/s)[0].includes(jemeppeBooking));
+    assert.ok(html.includes(splBooking));
+    assert.ok(!html.includes(`href="/${locale}/reservation"`));
+    assert.ok(!html.includes(`href="/${locale}/reservation/sint-pieters-leeuw"`));
+  }
+  assert.ok(home.match(/<div class="scroll-hero-actions".*?<\/div>/s)[0].includes(jemeppeBooking));
+  assert.ok(spl.match(/<div class="branch-reservation-heading".*?<\/a>/s)[0].includes(splBooking));
 }
 
 // Check local page and section links, including cross-page navigation.
@@ -73,10 +127,23 @@ for (const [path, html] of pages) {
   }
 }
 
-for (const [path, destination] of [["/", "/fr"], ["/restaurants/choose-branch", "/fr/restaurants/choose-branch"], ["/reservation", "/fr/reservation"], ["/reservation/jemeppe", "/fr/reservation/jemeppe"], ["/reservation/sint-pieters-leeuw", "/fr/reservation/sint-pieters-leeuw"]]) {
+const redirects = [
+  ["/", "/fr"],
+  ["/restaurants/choose-branch", "/fr/restaurants/choose-branch"],
+  ["/reservation", "/fr/reservation/jemeppe"],
+  ["/reservation/jemeppe", "/fr/reservation/jemeppe"],
+  ["/reservation/sint-pieters-leeuw", "/fr/reservation/sint-pieters-leeuw"],
+  ...locales.flatMap(locale => [
+    [`/${locale}/reservation`, `/${locale}/reservation/jemeppe`],
+    [`/${locale}/restaurants/choose-branch`, `/${locale}#pricing-overview`],
+    [`/${locale}/reservation/sint-pieters-leeuw`, `/${locale}/restaurants/sint-pieters-leeuw#reservation`],
+  ]),
+];
+for (const [path, destination] of redirects) {
   const response = await request(path, { redirect: "manual" });
   assert.ok([307, 308].includes(response.status), `${path}: redirect`);
-  assert.equal(new URL(response.headers.get("location"), base).pathname, destination);
+  const location = new URL(response.headers.get("location"), base);
+  assert.equal(location.pathname + location.hash, destination);
 }
 for (const path of ["/de", "/en/restaurants/unknown", "/en/reservation/unknown", "/reservation/unknown"]) {
   assert.equal((await request(path)).status, 404, `${path}: 404`);
@@ -97,9 +164,13 @@ for (const name of images) {
   assert.equal(response.status, 200, name);
   assert.match(response.headers.get("content-type") || "", /image\/webp/, name);
 }
-const optimized = await request("/_next/image?url=%2Fimages%2Fhero.webp&w=640&q=75", {
-  headers: { Accept: "image/webp" },
-});
-assert.equal(optimized.status, 200, "responsive image optimisation");
-assert.match(optimized.headers.get("content-type") || "", /image\/webp/);
+for (const name of [...heroImages, "j-food-2.webp"]) {
+  const version = name.startsWith("hero-2") ? "?v=3" : name === "j-food-2.webp" ? "?v=2" : "";
+  const src = encodeURIComponent(`/images/${name}${version}`);
+  const optimized = await request(`/_next/image?url=${src}&w=640&q=75`, {
+    headers: { Accept: "image/webp" },
+  });
+  assert.equal(optimized.status, 200, `${name}: responsive image optimisation`);
+  assert.match(optimized.headers.get("content-type") || "", /image\/webp/);
+}
 console.log(`Smoke checks passed: ${paths.length} pages, internal links and anchors, redirects, 404s, metadata, sitemap, robots, headers, ${images.length} images and responsive image delivery.`);

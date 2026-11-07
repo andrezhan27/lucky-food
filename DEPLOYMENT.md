@@ -6,7 +6,7 @@ The project is prepared for Vercel’s Next.js preset; it has not been published
 2. `vercel.json` selects the **Next.js** preset, `npm ci` installation and `npm run check` build command. This runs lint, TypeScript and the production build. Node **22.x** is declared in `package.json`. Leave the output directory on its framework default.
 3. Set `NEXT_PUBLIC_SITE_ORIGIN` to the final HTTPS custom domain, without a trailing slash, or leave it unset to use Vercel’s hostname. If omitted, the app uses `VERCEL_PROJECT_PRODUCTION_URL`, then `VERCEL_URL`. Enable Vercel system environment variables for this fallback. Local development defaults to `http://localhost:3000`; do not set a localhost value in Vercel.
 4. Deploy, then confirm `/` redirects to `/fr`, all three homepages and both restaurant pages open, and `/sitemap.xml` uses the final domain.
-5. Verify each branch’s online booking flow and supplied Google Maps destination on an actual phone. Widget languages, country-code defaults and availability are configured in Intelis.
+5. Verify Jemeppe’s online booking form, the Sint-Pieters-Leeuw phone link and both Google Maps destinations on an actual phone. Jemeppe’s widget language, country code and availability are configured in Intelis.
 
 No database, booking backend or API secrets are required. Fonts are self-hosted by Next.js after building. The build needs access to Google Fonts; the deployed site does not load fonts from Google. Source originals in `assets/originals/` are excluded from Git and deployment; the optimised assets in `public/images/` must be committed.
 
@@ -24,7 +24,7 @@ In another terminal, verify the running production server:
 npm run test:smoke
 ```
 
-To check a preview or a different local port, set `SMOKE_BASE_URL` to that server’s URL. Optionally set `SMOKE_SITE_ORIGIN` to the expected canonical origin. The smoke test checks the 21 localised pages, reservation iframe configuration, redirects, 404s, internal page and section links, metadata, sitemap/robots, security headers, all public WebP images and Next.js image optimisation.
+To check a preview or a different local port, set `SMOKE_BASE_URL` to that server’s URL. Optionally set `SMOKE_SITE_ORIGIN` to the expected canonical origin. The smoke test checks 12 localised pages, Jemeppe’s reservation iframe, redirects, 404s, links, metadata, sitemap and robots, response headers, and WebP delivery for the desktop and portrait hero sources.
 
 The production command uses Next.js’s supported `next build --webpack` option. A clean Turbopack build could not open its internal PostCSS worker port in this restricted local environment; the explicit webpack command lets local verification and Vercel use the same build path. Development can still use Turbopack; `npm run dev -- --webpack` is available if local worker-port restrictions affect development too.
 
@@ -32,7 +32,7 @@ For new photography, keep the originals in `assets/originals/`, run `npm run ima
 
 ## Business content still requiring owner confirmation
 
-Technical deployment is ready. The launch content still has the outstanding questions listed in README: conflicting opening hours; the Sint-Pieters-Leeuw telephone number and children’s discount scope; missing Jemeppe under-4/children’s Plus rates; and approved legal/privacy content. Both reservation widgets are configured and now display live forms after owner activation. The widget defaults currently use Portuguese and Portugal’s +351 phone prefix; configure local defaults in Intelis. No live reservation was submitted during verification.
+Confirm opening hours, Jemeppe’s under-4 and children’s Plus rates, and approved legal and privacy content before launch. Check the language and country-code defaults for Jemeppe’s live booking form in Intelis. Sint-Pieters-Leeuw takes bookings by phone.
 
 ## Platform references
 
@@ -43,6 +43,7 @@ Technical deployment is ready. The launch content still has the outstanding ques
 
 ## Responsive behaviour
 
+- Portrait screens up to 900px use the `hero-1-mobile.webp`, `hero-2-mobile.webp` and `hero-3-mobile.webp` crops. Landscape screens use the wide crops. The first photo loads eagerly and the two later photos load lazily.
 - All 12 localised pages were checked at 320, 390, 768 and 1024px widths without horizontal overflow or broken images.
 - Restaurant columns stack below 901px; contact headers remain on one line, booking is available above the contact details, and prices retain a readable table layout.
 - The language selector matches the navbar booking button’s 44px height. Carousel buttons also have 44px touch heights. Mobile footer contacts stack with larger type and touch targets.

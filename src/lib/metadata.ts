@@ -30,9 +30,9 @@ export function metadataFor(
       locale: `${locale}_BE`,
       images: [
         {
-          url: "/images/hero.webp",
-          width: 1675,
-          height: 939,
+          url: "/images/hero-1.webp",
+          width: 1672,
+          height: 941,
           alt: "Lucky Food",
         },
       ],

@@ -9,10 +9,12 @@ import {
   useTransform,
 } from "framer-motion";
 import { ArrowDown } from "lucide-react";
-import type { Locale } from "@/lib/data";
+import { jemeppe, sintPietersLeeuw, type Locale } from "@/lib/data";
 import { getDictionary } from "@/lib/translations";
 import { SectionSeparator } from "./section-separator";
 import { BookingLink } from "./interactive";
+
+const portraitHeroMedia = "(max-width: 900px) and (orientation: portrait)";
 
 export function ScrollHero({ locale }: { locale: Locale }) {
   const t = getDictionary(locale);
@@ -32,17 +34,23 @@ export function ScrollHero({ locale }: { locale: Locale }) {
       <div className="scroll-hero-panel">
         <div className="scroll-hero-images" aria-hidden="true">
           {[firstY, secondY, thirdY].map((y, index) => {
-            const name = `hero${index ? `-${index + 1}` : ""}`;
+            const name = `hero-${index + 1}`;
+            const version = index === 1 ? "?v=3" : "";
             const common = { alt: "", fill: true, sizes: "100vw" };
-            const { props: desktop } = getImageProps({ ...common, src: `/images/${name}.webp` });
-            const { props: mobile } = getImageProps({ ...common, src: `/images/${name}-mobile.webp` });
+            const { props: desktop } = getImageProps({ ...common, src: `/images/${name}.webp${version}` });
+            const { props: mobile } = getImageProps({ ...common, src: `/images/${name}-mobile.webp${version}` });
 
             return (
               <motion.div key={index} className={`scroll-hero-slide slide-${index + 1}`} style={{ y: reduce ? 0 : y }}>
                 <picture>
-                  <source media="(max-width: 700px)" srcSet={mobile.srcSet} sizes={mobile.sizes} />
+                  <source media={portraitHeroMedia} srcSet={mobile.srcSet} sizes={mobile.sizes} />
                   {/* getImageProps preserves Next.js image optimisation for art direction. */}
-                  <img {...desktop} alt="" loading="eager" fetchPriority={index === 0 ? "high" : "auto"} />
+                  <img
+                    {...desktop}
+                    alt=""
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
+                  />
                 </picture>
                 <div className="scroll-hero-shade" />
               </motion.div>
@@ -51,9 +59,9 @@ export function ScrollHero({ locale }: { locale: Locale }) {
         </div>
         <div className="scroll-hero-content">
           <h1 id="hero-name">
-            <Image src="/images/logo.webp" alt="Lucky Food" width={2172} height={724} sizes="(max-width: 700px) 78vw, 500px" priority />
+            <Image src="/images/logo.webp" alt="Lucky Food" width={2172} height={724} sizes="(max-width: 480px) 78vw, (max-width: 900px) 420px, 500px" loading="eager" />
           </h1>
-          <p className="scroll-hero-locations">Sint-Pieters-Leeuw <span aria-hidden="true">·</span> Jemeppe-sur-Sambre</p>
+          <p className="scroll-hero-locations">{jemeppe.city} <span aria-hidden="true">·</span> {sintPietersLeeuw.city}</p>
           <p className="scroll-hero-descriptor">{t.heroDescriptor}</p>
           <div className="scroll-hero-actions">
             <BookingLink className="hero-cta hero-cta-primary">{t.reserve}</BookingLink>

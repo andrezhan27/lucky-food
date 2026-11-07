@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
-import { booking, isLocale, locales, restaurants } from "@/lib/data";
+import { notFound, redirect } from "next/navigation";
+import { reservationPath, isLocale, locales, restaurants } from "@/lib/data";
 import { metadataFor } from "@/lib/metadata";
 import { getDictionary } from "@/lib/translations";
 
@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: {
   const restaurant = restaurants.find(r => r.id === branch);
   if (!isLocale(locale) || !restaurant) notFound();
   const t = getDictionary(locale);
-  const metadata = metadataFor(locale, booking(restaurant, locale).replace(`/${locale}`, ""), restaurant.name);
+  const metadata = metadataFor(locale, reservationPath(restaurant, locale).replace(`/${locale}`, ""), restaurant.name);
   const title = `${t.reserve} · ${restaurant.name}`;
   return { ...metadata, title, openGraph: { ...metadata.openGraph, title } };
 }
@@ -25,6 +25,9 @@ export default async function ReservationPage({ params }: {
   const { locale, branch } = await params;
   const restaurant = restaurants.find(r => r.id === branch);
   if (!isLocale(locale) || !restaurant) notFound();
+  if (!restaurant.reservationWidgetUrl) {
+    redirect(`/${locale}/restaurants/${restaurant.id}#reservation`);
+  }
   const t = getDictionary(locale);
   return (
     <section className="reservation-page" aria-labelledby="booking-title">

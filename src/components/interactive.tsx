@@ -27,7 +27,8 @@ import { useReducedMotion } from "framer-motion";
 import {
   locales,
   restaurants,
-  bookingForPath,
+  booking,
+  jemeppe,
   type Locale,
   type GalleryPhoto,
 } from "@/lib/data";
@@ -96,8 +97,7 @@ export function LanguageSwitcher() {
 }
 export function BookingLink({ children, className }: { children: React.ReactNode; className?: string }) {
   const locale = useContext(LanguageContext);
-  const pathname = usePathname();
-  return <Link className={className} href={bookingForPath(pathname, locale)}>{children}</Link>;
+  return <Link className={className} href={booking(jemeppe, locale)}>{children}</Link>;
 }
 export function PageFooter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -185,7 +185,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const t = getDictionary(locale);
-  const reservationHref = bookingForPath(pathname, locale);
+  const reservationHref = booking(jemeppe, locale);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -240,7 +240,7 @@ export function Navbar() {
   const navigation = ["food", "prices", "spaces"] as const;
   const navHref = (key: typeof navigation[number]) =>
     key === "prices"
-      ? `/${locale}/restaurants/choose-branch`
+      ? `/${locale}#pricing-overview`
       : `/${locale}#${key}`;
   const links = navigation.map((key) => (
     <Link
@@ -512,6 +512,88 @@ export function FoodCarousel({ photos, label }: { photos: GalleryPhoto[]; label?
 export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
   const locale = useContext(LanguageContext);
   const t = getDictionary(locale);
+  const viewport = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = viewport.current;
+    const group = element?.querySelector(".moving-food-group");
+    if (!element || !group) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let groupWidth = 0;
+    let frame = 0;
+    let lastFrame = 0;
+    let fraction = 0;
+    let autoPosition = element.scrollLeft;
+    let manualUntil = 0;
+    let pointerDown = false;
+    let visible = false;
+
+    function pauseForInput() {
+      manualUntil = performance.now() + 1200;
+    }
+    const onScroll = () => {
+      // Autoplay also emits scroll events. Only native scrolling extends the pause.
+      if (element.scrollLeft !== autoPosition) pauseForInput();
+    };
+    function onPointerDown() {
+      pointerDown = true;
+      pauseForInput();
+    }
+    function onPointerEnd() {
+      if (!pointerDown) return;
+      pointerDown = false;
+      pauseForInput();
+    }
+    const drift = (now: number) => {
+      const elapsed = lastFrame ? Math.min(now - lastFrame, 50) : 0;
+      lastFrame = now;
+      const canDrift = !pointerDown && now >= manualUntil && !element.matches(":focus-visible");
+      if (canDrift && groupWidth > element.clientWidth) {
+        // Accumulate fractions because some browsers round scrollLeft to whole pixels.
+        fraction += elapsed * groupWidth / 140_000;
+        const distance = Math.floor(fraction);
+        if (distance) {
+          fraction -= distance;
+          element.scrollLeft = (element.scrollLeft + distance) % groupWidth;
+          autoPosition = element.scrollLeft;
+        }
+      } else {
+        fraction = 0;
+      }
+      frame = requestAnimationFrame(drift);
+    };
+    function updateAnimation() {
+      cancelAnimationFrame(frame);
+      lastFrame = 0;
+      if (visible && !reducedMotion.matches) frame = requestAnimationFrame(drift);
+    }
+    const resize = new ResizeObserver(() => { groupWidth = group.getBoundingClientRect().width; });
+    resize.observe(group);
+    const visibility = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      updateAnimation();
+    });
+    visibility.observe(element);
+    reducedMotion.addEventListener("change", updateAnimation);
+    element.addEventListener("scroll", onScroll, { passive: true });
+    element.addEventListener("wheel", pauseForInput, { passive: true });
+    element.addEventListener("pointerdown", onPointerDown, { passive: true });
+    window.addEventListener("pointerup", onPointerEnd);
+    window.addEventListener("pointercancel", onPointerEnd);
+    return () => {
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      visibility.disconnect();
+      reducedMotion.removeEventListener("change", updateAnimation);
+      element.removeEventListener("scroll", onScroll);
+      element.removeEventListener("wheel", pauseForInput);
+      element.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
+    };
+  }, []);
+
   return (
     <section
       className="moving-food-carousel"
@@ -520,6 +602,7 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
     >
       <div
         className="moving-food-viewport"
+        ref={viewport}
         tabIndex={0}
         aria-label={t.carousel}
       >
@@ -542,11 +625,10 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
                     src={photo.src}
                     width={photo.width}
                     height={photo.height}
-                    alt={duplicate ? "" : `${t[photo.altKey]} · ${photo.city}`}
+                    alt={duplicate ? "" : t[photo.altKey]}
                     sizes={`(max-width: 700px) ${Math.round((240 * photo.width) / photo.height)}px, ${Math.round((380 * photo.width) / photo.height)}px`}
                     draggable={false}
                   />
-                  <figcaption>{photo.city}</figcaption>
                 </figure>
               ))}
             </div>
@@ -555,7 +637,6 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
       </div>
       <div className="moving-food-controls">
         <span>{t.foodNote}</span>
-
       </div>
     </section>
   );
@@ -563,11 +644,13 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
 
 export function ReviewCarousel({
   children,
+  copies,
   previousLabel,
   nextLabel,
   label,
 }: {
   children: React.ReactNode;
+  copies: React.ReactNode;
   previousLabel: string;
   nextLabel: string;
   label: string;
@@ -575,49 +658,54 @@ export function ReviewCarousel({
   const track = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const total = Children.count(children);
-  const [view, setView] = useState({
-    start: true,
-    end: false,
-  });
-  useEffect(() => {
+  const looping = total > 1;
+
+  useLayoutEffect(() => {
     const el = track.current;
-    if (!el) return;
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
-      setView({
-        start: el.scrollLeft <= 8,
-        end: el.scrollLeft >= maxScroll - 8,
-      });
+    if (!el || !looping) return;
+
+    const cycleWidth = () => el.children[total].getBoundingClientRect().left
+      - el.children[0].getBoundingClientRect().left;
+    el.scrollTo({ left: cycleWidth(), behavior: "instant" });
+
+    // Shift a settled copy to its matching position in the middle set.
+    const recenter = () => {
+      const width = cycleWidth();
+      const left = el.scrollLeft;
+      if (!width) return;
+      if (left < width - 1) el.scrollTo({ left: left + width, behavior: "instant" });
+      if (left >= width * 2 - 1) el.scrollTo({ left: left - width, behavior: "instant" });
     };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(measure);
+    if (Reflect.has(el, "onscrollend")) {
+      el.addEventListener("scrollend", recenter);
+      return () => el.removeEventListener("scrollend", recenter);
+    }
+
+    let timer = 0;
+    const onScroll = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(recenter, 160);
     };
-    const observer = new ResizeObserver(schedule);
-    observer.observe(el);
-    schedule();
-    el.addEventListener("scroll", schedule, { passive: true });
+    el.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-      el.removeEventListener("scroll", schedule);
+      window.clearTimeout(timer);
+      el.removeEventListener("scroll", onScroll);
     };
-  }, [total]);
+  }, [looping, total]);
+
   const go = (direction: number) => {
     const el = track.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>(".review-card");
-    el.scrollBy({
-      left:
-        direction *
-        ((card?.getBoundingClientRect().width || el.clientWidth) + 24),
+    if (!el || !looping) return;
+    const first = el.children[0].getBoundingClientRect().left;
+    const step = el.children[1].getBoundingClientRect().left - first;
+    el.scrollTo({
+      left: (Math.round(el.scrollLeft / step) + direction) * step,
       behavior: reduce ? "instant" : "smooth",
     });
   };
   return (
     <div className="review-carousel">
-      <button className="review-arrow review-arrow-previous" type="button" aria-label={previousLabel} disabled={view.start} onClick={() => go(-1)}>
+      <button className="review-arrow review-arrow-previous" type="button" aria-label={previousLabel} disabled={!looping} onClick={() => go(-1)}>
         <ArrowLeft size={18} aria-hidden="true" />
       </button>
       <div
@@ -626,6 +714,12 @@ export function ReviewCarousel({
         tabIndex={0}
         role="region"
         aria-label={label}
+        onMouseDown={(event) => {
+          // Copies can open their source link by pointer without taking focus.
+          if (event.target instanceof Element && event.target.closest('.review-card[aria-hidden="true"] a')) {
+            event.preventDefault();
+          }
+        }}
         onKeyDown={(event) => {
           if (
             event.target === event.currentTarget &&
@@ -636,9 +730,12 @@ export function ReviewCarousel({
           }
         }}
       >
-        {children}
+        {looping && <>{copies}</>}
+        <>{children}</>
+        {looping && <>{copies}</>}
+        {total === 2 && <>{copies}</>}
       </div>
-      <button className="review-arrow review-arrow-next" type="button" aria-label={nextLabel} disabled={view.end} onClick={() => go(1)}>
+      <button className="review-arrow review-arrow-next" type="button" aria-label={nextLabel} disabled={!looping} onClick={() => go(1)}>
         <ArrowRight size={18} aria-hidden="true" />
       </button>
     </div>
