@@ -261,6 +261,9 @@ svg {
   align-items: center;
   justify-content: center;
 }
+.mobile-menu {
+  display: none;
+}
 .eyebrow.light {
   color: #f5dba7;
   display: flex;
@@ -919,24 +922,40 @@ footer {
     max-width: 260px;
   }
   .mobile-menu {
+    display: block;
     background: var(--dark);
     position: fixed;
     inset: var(--header-height) 0 0;
-    padding: 24px max(24px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+    padding: 24px max(24px, env(safe-area-inset-right, 0px)) calc(30px + env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+    overflow-y: auto;
     overscroll-behavior: contain;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    transition: opacity var(--motion) ease, transform var(--motion) ease, visibility 0s;
+  }
+  .mobile-menu[inert] {
+    opacity: 0;
+    transform: translateY(8px);
+    visibility: hidden;
+    transition-delay: 0s, 0s, var(--motion);
   }
   .mobile-menu nav {
     display: flex;
     flex-direction: column;
   }
-  .mobile-menu nav a {
+  .mobile-menu nav a:where(:not(.button)) {
     font-family: var(--font-heading);
-    font-size: 36px;
+    font-size: 32px;
+    font-weight: 500;
     padding: 20px 0;
     border-bottom: 1px solid #ffffff26;
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+  .mobile-menu-book {
+    margin-top: 24px;
   }
   .detail-hero {
     border-top-width: 76px;
@@ -1376,10 +1395,6 @@ footer {
   .food-copy h2 {
     font-size: 38px;
   }
-  .mobile-menu nav a {
-    font-size: 32px;
-    font-weight: 500;
-  }
 }
 @media (max-width: 700px) {
   h2,
@@ -1411,15 +1426,6 @@ footer {
 .mobile-prices h3,
 .child-groups h4 {
   white-space: pre-line;
-}
-
-/* Restaurant navigation disclosure: hover, keyboard and tap share one state. */
-/* Transparent bridge prevents the hover target disappearing on the way down. */
-@media (max-width: 900px) {
-  .mobile-menu {
-    overflow-y: auto;
-    padding-bottom: calc(30px + env(safe-area-inset-bottom));
-  }
 }
 
 /* Native swipe/scroll carousel; timed advancement is managed in the component. */
@@ -1588,9 +1594,20 @@ footer {
 .moving-food-viewport {
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   overscroll-behavior-x: contain;
   border-radius: var(--radius);
+}
+.moving-food-viewport::-webkit-scrollbar {
+  display: none;
+}
+.moving-food-viewport[data-moving] {
+  overflow: clip;
+  touch-action: pan-y pinch-zoom;
+}
+@media (pointer: fine) {
+  .moving-food-viewport[data-moving] { cursor: grab; }
+  .moving-food-viewport[data-moving]:active { cursor: grabbing; }
 }
 .moving-food-track {
   display: flex;
@@ -2026,6 +2043,10 @@ footer {
 .scroll-hero-bottom a { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; }
 @media (max-width: 900px) {
   .scroll-hero { height: 220svh; }
+  .hero-cta-secondary {
+    background: #24231f70;
+    backdrop-filter: none;
+  }
 }
 @media (max-width: 900px) and (orientation: portrait) {
   .scroll-hero-panel { padding-bottom: 115px; }
@@ -2234,7 +2255,6 @@ footer {
 .restaurant-dropdown-panel a svg { flex-shrink: 0; }
 @media (max-width: 900px) {
   .footer-top { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .mobile-menu { overflow-y: auto; }
   .mobile-menu .restaurant-dropdown-trigger {
     width: 100%;
     justify-content: space-between;
@@ -2402,7 +2422,7 @@ footer {
   to { transform: scale(1); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .reveal[data-reveal] {
+  .reveal[data-reveal="visible"] {
     transition: opacity 650ms cubic-bezier(.22, .68, .25, 1) var(--reveal-delay, 0s), transform 650ms cubic-bezier(.22, .68, .25, 1) var(--reveal-delay, 0s);
   }
   .reveal[data-reveal="waiting"] { opacity: 0; transform: translate3d(0, 18px, 0); }
@@ -2543,7 +2563,7 @@ footer {
 /* Readable supporting copy and comfortable targets on phones. */
 @media (max-width: 700px) {
   .button, .hero-cta, .text-link { font-size: 14px; }
-  .mobile-menu nav > a, .mobile-menu .restaurant-dropdown-trigger { font-size: clamp(24px, 5vw, 32px); padding-block: 16px; }
+  .mobile-menu nav > a:not(.button), .mobile-menu .restaurant-dropdown-trigger { font-size: clamp(24px, 5vw, 32px); padding-block: 16px; }
   .section-heading > p, .food-copy .body-copy { font-size: 15px; }
   .branch-price-table { font-size: 13px; }
   .price-overview-table { font-size: 14px; }

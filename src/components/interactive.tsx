@@ -190,6 +190,10 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    button.current?.focus({ preventScroll: true });
+  }, []);
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 901px)");
     const closeOnDesktop = () => { if (desktop.matches) setOpen(false); };
@@ -197,7 +201,13 @@ export function Navbar() {
     return () => desktop.removeEventListener("change", closeOnDesktop);
   }, []);
   useEffect(() => {
-    const scroll = () => setScrolled(window.scrollY > 30);
+    let pastThreshold: boolean | undefined;
+    const scroll = () => {
+      const next = window.scrollY > 30;
+      if (pastThreshold === next) return;
+      pastThreshold = next;
+      setScrolled(next);
+    };
     scroll();
     window.addEventListener("scroll", scroll, { passive: true });
     return () => window.removeEventListener("scroll", scroll);
@@ -206,12 +216,12 @@ export function Navbar() {
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    if (panel.current) panel.current.scrollTop = 0;
     Array.from(panel.current?.querySelectorAll<HTMLElement>("a,button") || [])
-      .find(element => element.getClientRects().length > 0)?.focus();
+      .find(element => element.getClientRects().length > 0)?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpen(false);
-        button.current?.focus();
+        closeMenu();
       }
       if (e.key === "Tab") {
         const items = [
@@ -236,24 +246,12 @@ export function Navbar() {
       document.body.style.overflow = previous;
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [closeMenu, open]);
   const navigation = ["food", "prices", "spaces"] as const;
   const navHref = (key: typeof navigation[number]) =>
     key === "prices"
       ? `/${locale}#pricing-overview`
       : `/${locale}#${key}`;
-  const links = navigation.map((key) => (
-    <Link
-      key={key}
-      href={navHref(key)}
-      onClick={() => {
-        setOpen(false);
-        button.current?.focus();
-      }}
-    >
-      {t[key]}
-    </Link>
-  ));
   return (
     <header
       className={`header ${scrolled || open || pathname.includes("/restaurants/") || pathname.includes("/reservation") ? "solid" : ""}`}
@@ -304,6 +302,7 @@ export function Navbar() {
           <button
             className="menu-toggle"
             ref={button}
+            type="button"
             aria-label={open ? t.close : t.menu}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -313,33 +312,27 @@ export function Navbar() {
           </button>
         </div>
       </div>
-      {open && (
-        <div
-          className="mobile-menu"
-          id="mobile-menu"
-          ref={panel}
-          role="dialog"
-          aria-modal="true"
-          aria-label={t.menu}
-        >
-          <nav>
-            <RestaurantDropdown locale={locale} onSelect={() => {
-              setOpen(false);
-              button.current?.focus();
-            }} />
-            {links}
-            <Link
-              href={reservationHref}
-              onClick={() => {
-                setOpen(false);
-                button.current?.focus();
-              }}
-            >
-              {t.reserve}
+      <div
+        className="mobile-menu"
+        id="mobile-menu"
+        ref={panel}
+        role="dialog"
+        aria-modal={open || undefined}
+        aria-label={t.menu}
+        inert={!open}
+      >
+        <nav>
+          <RestaurantDropdown locale={locale} onSelect={closeMenu} />
+          {navigation.map((key) => (
+            <Link key={key} href={navHref(key)} onClick={closeMenu}>
+              {t[key]}
             </Link>
-          </nav>
-        </div>
-      )}
+          ))}
+          <Link className="button mobile-menu-book" href={reservationHref} onClick={closeMenu}>
+            {t.reserve}
+          </Link>
+        </nav>
+      </div>
     </header>
   );
 }
@@ -516,81 +509,111 @@ export function MovingFoodCarousel({ photos }: { photos: FoodPhoto[] }) {
 
   useEffect(() => {
     const element = viewport.current;
-    const group = element?.querySelector(".moving-food-group");
-    if (!element || !group) return;
+    const track = element?.querySelector(".moving-food-track");
+    const group = track?.firstElementChild;
+    if (!element || !track || !group) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const duration = 140_000;
+    // Use one compositor animation for autoplay and seek it directly during drag.
+    const effect = new KeyframeEffect(track, [], { duration, iterations: Infinity });
+    const animation = new Animation(effect, document.timeline);
     let groupWidth = 0;
-    let frame = 0;
-    let lastFrame = 0;
-    let fraction = 0;
-    let autoPosition = element.scrollLeft;
-    let manualUntil = 0;
-    let pointerDown = false;
     let visible = false;
+    let drag: { id: number; x: number; time: number } | undefined;
 
-    function pauseForInput() {
-      manualUntil = performance.now() + 1200;
-    }
-    const onScroll = () => {
-      // Autoplay also emits scroll events. Only native scrolling extends the pause.
-      if (element.scrollLeft !== autoPosition) pauseForInput();
-    };
-    function onPointerDown() {
-      pointerDown = true;
-      pauseForInput();
-    }
-    function onPointerEnd() {
-      if (!pointerDown) return;
-      pointerDown = false;
-      pauseForInput();
-    }
-    const drift = (now: number) => {
-      const elapsed = lastFrame ? Math.min(now - lastFrame, 50) : 0;
-      lastFrame = now;
-      const canDrift = !pointerDown && now >= manualUntil && !element.matches(":focus-visible");
-      if (canDrift && groupWidth > element.clientWidth) {
-        // Accumulate fractions because some browsers round scrollLeft to whole pixels.
-        fraction += elapsed * groupWidth / 140_000;
-        const distance = Math.floor(fraction);
-        if (distance) {
-          fraction -= distance;
-          element.scrollLeft = (element.scrollLeft + distance) % groupWidth;
-          autoPosition = element.scrollLeft;
-        }
+    const updatePlayback = () => {
+      if (!groupWidth) return;
+      if (visible && !drag && !element.matches(":focus-visible")) {
+        animation.play();
       } else {
-        fraction = 0;
+        animation.pause();
       }
-      frame = requestAnimationFrame(drift);
     };
-    function updateAnimation() {
-      cancelAnimationFrame(frame);
-      lastFrame = 0;
-      if (visible && !reducedMotion.matches) frame = requestAnimationFrame(drift);
-    }
-    const resize = new ResizeObserver(() => { groupWidth = group.getBoundingClientRect().width; });
+    const currentTime = () => Number(animation.currentTime ?? 0) % duration;
+    const seek = (time: number, pixels: number) => {
+      const next = time + (pixels / groupWidth) * duration;
+      animation.currentTime = ((next % duration) + duration) % duration;
+    };
+    const resizeTrack = () => {
+      const width = group.getBoundingClientRect().width;
+      const nextWidth = !reducedMotion.matches && width > element.clientWidth ? width : 0;
+      if (nextWidth === groupWidth) return;
+
+      const progress = currentTime() / duration;
+      if (nextWidth) {
+        const position = groupWidth ? progress * nextWidth : element.scrollLeft;
+        element.dataset.moving = "";
+        effect.setKeyframes([{ transform: "translateX(0px)" }, { transform: `translateX(-${nextWidth}px)` }]);
+        animation.currentTime = ((position % nextWidth) / nextWidth) * duration;
+      } else {
+        animation.cancel();
+        delete element.dataset.moving;
+        element.scrollLeft = progress * width;
+        drag = undefined;
+      }
+      groupWidth = nextWidth;
+      updatePlayback();
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!groupWidth || !event.isPrimary || event.button !== 0 || drag) return;
+      element.setPointerCapture(event.pointerId);
+      animation.pause();
+      drag = { id: event.pointerId, x: event.clientX, time: currentTime() };
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (drag?.id === event.pointerId) seek(drag.time, drag.x - event.clientX);
+    };
+    const onPointerEnd = (event: PointerEvent) => {
+      if (drag?.id !== event.pointerId) return;
+      drag = undefined;
+      updatePlayback();
+    };
+    const onWheel = (event: WheelEvent) => {
+      const { deltaMode, deltaX, deltaY, shiftKey } = event;
+      const horizontal = shiftKey ? deltaX || deltaY : deltaX;
+      if (!groupWidth || !horizontal || event.ctrlKey || !event.cancelable) return;
+      if (!shiftKey && Math.abs(deltaY) > Math.abs(horizontal)) return;
+      event.preventDefault();
+      const unit = deltaMode === 1 ? 16 : deltaMode === 2 ? element.clientWidth : 1;
+      seek(currentTime(), horizontal * unit);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!groupWidth || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) return;
+      event.preventDefault();
+      updatePlayback();
+      seek(currentTime(), event.key === "ArrowLeft" ? -80 : 80);
+    };
+
+    const resize = new ResizeObserver(resizeTrack);
     resize.observe(group);
+    resize.observe(element);
     const visibility = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
-      updateAnimation();
+      updatePlayback();
     });
     visibility.observe(element);
-    reducedMotion.addEventListener("change", updateAnimation);
-    element.addEventListener("scroll", onScroll, { passive: true });
-    element.addEventListener("wheel", pauseForInput, { passive: true });
+    reducedMotion.addEventListener("change", resizeTrack);
     element.addEventListener("pointerdown", onPointerDown, { passive: true });
-    window.addEventListener("pointerup", onPointerEnd);
-    window.addEventListener("pointercancel", onPointerEnd);
+    element.addEventListener("pointermove", onPointerMove, { passive: true });
+    element.addEventListener("lostpointercapture", onPointerEnd);
+    element.addEventListener("wheel", onWheel, { passive: false });
+    element.addEventListener("keydown", onKeyDown);
+    element.addEventListener("focus", updatePlayback);
+    element.addEventListener("blur", updatePlayback);
     return () => {
-      cancelAnimationFrame(frame);
+      animation.cancel();
+      delete element.dataset.moving;
       resize.disconnect();
       visibility.disconnect();
-      reducedMotion.removeEventListener("change", updateAnimation);
-      element.removeEventListener("scroll", onScroll);
-      element.removeEventListener("wheel", pauseForInput);
+      reducedMotion.removeEventListener("change", resizeTrack);
       element.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerEnd);
-      window.removeEventListener("pointercancel", onPointerEnd);
+      element.removeEventListener("pointermove", onPointerMove);
+      element.removeEventListener("lostpointercapture", onPointerEnd);
+      element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("keydown", onKeyDown);
+      element.removeEventListener("focus", updatePlayback);
+      element.removeEventListener("blur", updatePlayback);
     };
   }, []);
 

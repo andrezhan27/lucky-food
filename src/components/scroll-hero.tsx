@@ -24,16 +24,19 @@ export function ScrollHero({ locale }: { locale: Locale }) {
     target: section,
     offset: ["start start", "end end"],
   });
-  // Adjacent panels share their travel range so each wipe stays fully covered.
-  const firstY = useTransform(scrollYProgress, [0, 0.1, 0.5, 1], ["0%", "0%", "-100%", "-100%"]);
-  const secondY = useTransform(scrollYProgress, [0, 0.1, 0.5, 0.9, 1], ["100%", "100%", "0%", "-100%", "-100%"]);
-  const thirdY = useTransform(scrollYProgress, [0, 0.5, 0.9, 1], ["100%", "100%", "0%", "0%"]);
+  // Full transform values let Motion use a native scroll timeline where supported.
+  const above = "translateY(-100%)";
+  const center = "translateY(0%)";
+  const below = "translateY(100%)";
+  const firstSlide = useTransform(scrollYProgress, [0, 0.1, 0.5, 1], [center, center, above, above]);
+  const secondSlide = useTransform(scrollYProgress, [0, 0.1, 0.5, 0.9, 1], [below, below, center, above, above]);
+  const thirdSlide = useTransform(scrollYProgress, [0, 0.5, 0.9, 1], [below, below, center, center]);
 
   return (
     <section ref={section} className="scroll-hero" aria-labelledby="hero-name" data-reduced-motion={reduce ? "true" : undefined}>
       <div className="scroll-hero-panel">
         <div className="scroll-hero-images" aria-hidden="true">
-          {[firstY, secondY, thirdY].map((y, index) => {
+          {[firstSlide, secondSlide, thirdSlide].map((transform, index) => {
             const name = `hero-${index + 1}`;
             const version = index === 1 ? "?v=3" : "";
             const common = { alt: "", fill: true, sizes: "100vw" };
@@ -41,7 +44,7 @@ export function ScrollHero({ locale }: { locale: Locale }) {
             const { props: mobile } = getImageProps({ ...common, src: `/images/${name}-mobile.webp${version}` });
 
             return (
-              <motion.div key={index} className={`scroll-hero-slide slide-${index + 1}`} style={{ y: reduce ? 0 : y }}>
+              <motion.div key={index} className={`scroll-hero-slide slide-${index + 1}`} style={{ transform: reduce ? "none" : transform }}>
                 <picture>
                   <source media={portraitHeroMedia} srcSet={mobile.srcSet} sizes={mobile.sizes} />
                   {/* getImageProps preserves Next.js image optimisation for art direction. */}
